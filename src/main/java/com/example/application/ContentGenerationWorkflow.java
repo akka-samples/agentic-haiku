@@ -29,7 +29,7 @@ public class ContentGenerationWorkflow extends Workflow<ContentGeneration> {
     this.imageGenerator = imageGenerator;
   }
 
-  public record StartGeneration(List<String> inputs) {
+  public record StartGeneration(String collectionId, List<String> inputs) {
   }
 
   @Override
@@ -45,7 +45,7 @@ public class ContentGenerationWorkflow extends Workflow<ContentGeneration> {
       return effects().reply(done());
     } else {
       log.info("Starting image generation with inputs: {}", startGeneration.inputs);
-      ContentGeneration contentGeneration = ContentGeneration.of(startGeneration.inputs);
+      ContentGeneration contentGeneration = ContentGeneration.of(startGeneration.collectionId, startGeneration.inputs);
       return effects().updateState(contentGeneration)
         .transitionTo(ContentGenerationWorkflow::composePrompt)
         .thenReply(done());

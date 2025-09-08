@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static akka.Done.done;
 
@@ -44,7 +45,7 @@ public class TextInputCollectorEntity
       inputs.add(input);
       return effects()
         .persist(new TextInputAdded(input),
-          new AllInputsCollected(currentState().collectorId(), inputs))
+          new AllInputsCollected(currentState().collectorId(), UUID.randomUUID().toString(), inputs))
         .thenReply(__ -> done());
     } else {
       return effects()
