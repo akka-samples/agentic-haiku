@@ -1,11 +1,11 @@
-package com.example.application;
+package akka.haiku.application;
 
 import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.annotations.Consume;
 import akka.javasdk.annotations.Query;
 import akka.javasdk.view.TableUpdater;
 import akka.javasdk.view.View;
-import com.example.domain.TextInputCollectorEvent;
+import akka.haiku.domain.TextInputCollectorEvent;
 
 import java.time.Instant;
 import java.util.Collection;

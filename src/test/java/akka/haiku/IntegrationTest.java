@@ -1,4 +1,4 @@
-package com.example;
+package akka.haiku;
 
 import akka.javasdk.testkit.TestKitSupport;
 import org.junit.jupiter.api.Test;

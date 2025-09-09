@@ -1,11 +1,11 @@
-package com.example.application;
+package akka.haiku.application;
 
 import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.annotations.Consume;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.consumer.Consumer;
-import com.example.application.ContentGenerationWorkflow.StartGeneration;
-import com.example.domain.TextInputCollectorEvent;
+import akka.haiku.application.ContentGenerationWorkflow.StartGeneration;
+import akka.haiku.domain.TextInputCollectorEvent;
 
 @ComponentId("input-consumer")
 @Consume.FromEventSourcedEntity(value = TextInputCollectorEntity.class, ignoreUnknown = true)

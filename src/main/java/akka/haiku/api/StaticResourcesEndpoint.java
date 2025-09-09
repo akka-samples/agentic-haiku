@@ -1,4 +1,4 @@
-package com.example.api;
+package akka.haiku.api;
 
 import akka.http.javadsl.model.HttpResponse;
 import akka.javasdk.annotations.Acl;

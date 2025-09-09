@@ -1,4 +1,4 @@
-package com.example.domain;
+package akka.haiku.domain;
 
 import java.time.Instant;
 import java.util.List;
