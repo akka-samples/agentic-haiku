@@ -8,6 +8,7 @@ import akka.javasdk.annotations.http.Post;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.http.HttpResponses;
 import com.example.application.GeneratedContentView;
+import com.example.application.InputsViews;
 import com.example.application.TextInputCollectorEntity;
 
 import java.util.List;
@@ -34,6 +35,8 @@ public class ContentCreationEndpoint {
   @Post("/inputs")
   public HttpResponse addInput(AddInputRequest request) {
 
+    //TODO add validation here
+
     componentClient
       .forEventSourcedEntity("collectorA")
       .method(TextInputCollectorEntity::addTextInput)
@@ -51,6 +54,17 @@ public class ContentCreationEndpoint {
       .invoke();
 
     return collectorState.inputs();
+  }
+
+  @Get("/collected-inputs-stream")
+  public HttpResponse getCollected() {
+
+    var collectedInputUpdates = componentClient
+      .forView()
+      .stream(InputsViews::getStream)
+      .source();
+
+    return HttpResponses.serverSentEvents(collectedInputUpdates);
   }
 
   @Get("/content-stream")

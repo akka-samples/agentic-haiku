@@ -23,7 +23,7 @@ public class InputConsumer extends Consumer {
 
     componentClient.forWorkflow(workflowId)
       .method(ContentGenerationWorkflow::start)
-      .invoke(new StartGeneration(event.inputs()));
+      .invoke(new StartGeneration(event.collectionId(), event.inputs()));
 
     return effects().done();
   }
