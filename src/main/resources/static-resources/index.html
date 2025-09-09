@@ -14,52 +14,64 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            height: 100vh;
+            padding: 10px;
+            overflow: hidden;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
+            height: calc(100vh - 20px);
+            display: flex;
+            flex-direction: column;
         }
 
         .header {
             text-align: center;
             color: white;
-            margin-bottom: 40px;
+            margin-bottom: 15px;
         }
 
         .header h1 {
-            font-size: 3rem;
-            margin-bottom: 10px;
+            font-size: 2rem;
+            margin-bottom: 5px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
         .header p {
-            font-size: 1.2rem;
+            font-size: 1rem;
             opacity: 0.9;
         }
 
         .input-section {
             background: white;
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 40px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            min-height: 0;
         }
 
         .input-form {
             display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin-bottom: 10px;
         }
 
         .input-field {
             flex: 1;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
             transition: border-color 0.3s;
         }
 
@@ -69,18 +81,18 @@
         }
 
         .submit-btn {
-            padding: 15px 30px;
+            padding: 10px 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 10px;
-            font-size: 16px;
+            border-radius: 6px;
+            font-size: 14px;
             cursor: pointer;
             transition: transform 0.2s;
         }
 
         .submit-btn:hover {
-            transform: translateY(-2px);
+            transform: translateY(-1px);
         }
 
         .submit-btn:disabled {
@@ -90,10 +102,11 @@
         }
 
         .status {
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 8px;
             display: none;
+            font-size: 0.9rem;
         }
 
         .status.success {
@@ -108,80 +121,75 @@
             border: 1px solid #f5c6cb;
         }
 
-        .content-section, .inputs-section {
+        .inputs-section {
             background: white;
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 40px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+            width: 25%;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .content-section {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+            width: 75%;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
         }
 
         .content-section h2, .inputs-section h2 {
             color: #333;
-            margin-bottom: 20px;
-            font-size: 2rem;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+            flex-shrink: 0;
         }
 
         .inputs-list {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            max-height: 300px;
+            gap: 6px;
+            flex: 1;
             overflow-y: auto;
+            min-height: 0;
         }
 
         .input-item {
             background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #28a745;
+            padding: 8px;
+            border-radius: 4px;
+            border-left: 3px solid #28a745;
             transition: transform 0.2s;
         }
 
         .input-item:hover {
-            transform: translateX(5px);
+            transform: translateX(3px);
         }
 
         .input-text {
-            font-size: 1rem;
+            font-size: 0.9rem;
             color: #495057;
             margin: 0;
-        }
-
-        .inputs-counter {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .counter-badge {
-            background: #28a745;
-            color: white;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: bold;
-        }
-
-        .refresh-indicator {
-            font-size: 0.8rem;
-            color: #666;
-            font-style: italic;
         }
 
         .no-inputs {
             text-align: center;
             color: #666;
             font-style: italic;
-            padding: 40px;
+            padding: 20px;
+            font-size: 0.9rem;
         }
 
         .connection-status {
-            padding: 10px 15px;
+            padding: 8px 12px;
             border-radius: 5px;
-            margin-bottom: 20px;
             font-weight: bold;
+            font-size: 0.8rem;
         }
 
         .connection-status.connected {
@@ -194,70 +202,87 @@
             color: #721c24;
         }
 
+        .status-bar {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 6px 12px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            border-radius: 6px;
+            margin-top: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
         .content-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
         }
 
         .content-item {
             background: #f8f9fa;
-            border-radius: 10px;
-            padding: 25px;
-            border-left: 5px solid #667eea;
-            transition: transform 0.3s, box-shadow 0.3s;
+            border-radius: 6px;
+            padding: 15px;
+            border-left: 3px solid #667eea;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .content-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         }
 
         .content-meta {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
             border-bottom: 1px solid #e0e0e0;
         }
 
         .content-timestamp {
             color: #666;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
         }
 
         .content-type {
             background: #667eea;
             color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
             font-weight: bold;
         }
 
         .content-prompt {
             background: #e9ecef;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 12px;
             font-style: italic;
             color: #495057;
+            font-size: 0.9rem;
         }
 
         .haiku {
             background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
-            padding: 20px;
-            border-radius: 10px;
+            padding: 12px;
+            border-radius: 6px;
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .haiku-line {
-            font-size: 1.1rem;
-            line-height: 1.6;
+            font-size: 1rem;
+            line-height: 1.4;
             color: #2d3436;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
 
         .image-container {
@@ -267,15 +292,16 @@
         .generated-image {
             max-width: 100%;
             height: auto;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            border-radius: 6px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
         }
 
         .no-content {
             text-align: center;
             color: #666;
             font-style: italic;
-            padding: 40px;
+            padding: 20px;
+            font-size: 0.9rem;
         }
 
         .collected-inputs-item {
@@ -408,31 +434,32 @@
             <div class="status" id="status"></div>
         </div>
 
-        <div class="inputs-section">
-            <h2>📝 Collected Inputs</h2>
-            <div class="inputs-counter">
-                <span class="counter-badge" id="inputsCounter">0 inputs</span>
-                <span class="refresh-indicator" id="refreshIndicator">Last updated: Never</span>
+        <div class="main-content">
+            <div class="inputs-section">
+                <h2>📝 Collected Inputs</h2>
+                <div class="inputs-list" id="inputsList">
+                    <div class="no-inputs">
+                        No inputs collected yet. Submit your first input above!
+                    </div>
+                </div>
             </div>
-            <div class="inputs-list" id="inputsList">
-                <div class="no-inputs">
-                    No inputs collected yet. Submit your first input above!
+
+            <div class="content-section">
+                <h2>Generated Content</h2>
+                <div class="content-grid" id="contentGrid">
+                    <div class="no-content">
+                        No content generated yet. Submit some text inputs to get started!
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="content-section">
-            <h2>Generated Content</h2>
+        <div class="status-bar">
             <div class="connection-status" id="connectionStatus">
                 <span class="loading"></span> Connecting to content stream...
             </div>
             <div class="connection-status" id="collectedConnectionStatus">
                 <span class="loading"></span> Connecting to collected inputs stream...
-            </div>
-            <div class="content-grid" id="contentGrid">
-                <div class="no-content">
-                    No content generated yet. Submit some text inputs to get started!
-                </div>
             </div>
         </div>
     </div>
@@ -441,8 +468,6 @@
         class InputsManager {
             constructor() {
                 this.inputsList = document.getElementById('inputsList');
-                this.inputsCounter = document.getElementById('inputsCounter');
-                this.refreshIndicator = document.getElementById('refreshIndicator');
                 this.pollingInterval = null;
                 this.currentInputs = [];
                 
@@ -465,7 +490,6 @@
                     if (response.ok) {
                         const inputs = await response.json();
                         this.updateInputsList(inputs);
-                        this.updateRefreshIndicator();
                     } else {
                         console.error('Failed to fetch inputs:', response.status, response.statusText);
                     }
@@ -481,10 +505,6 @@
                 }
                 
                 this.currentInputs = inputs;
-                
-                // Update counter
-                const count = inputs.length;
-                this.inputsCounter.textContent = `${count} input${count !== 1 ? 's' : ''}`;
                 
                 // Clear existing content
                 this.inputsList.innerHTML = '';
@@ -519,11 +539,6 @@
                         this.inputsList.appendChild(inputItem);
                     });
                 }
-            }
-
-            updateRefreshIndicator() {
-                const now = new Date();
-                this.refreshIndicator.textContent = `Last updated: ${now.toLocaleTimeString()}`;
             }
 
             escapeHtml(text) {
@@ -755,10 +770,6 @@
                         <span class="content-type">${contentType}</span>
                     </div>
                     
-                    <div class="content-prompt">
-                        <strong>Prompt:</strong> ${this.escapeHtml(content.prompt)}
-                    </div>
-                    
                     ${hasHaiku ? `
                         <div class="haiku">
                             <div class="haiku-line">${this.escapeHtml(content.haiku.line1)}</div>
@@ -772,6 +783,10 @@
                             <img src="${this.escapeHtml(content.image.url)}" alt="Generated image" class="generated-image" />
                         </div>
                     ` : ''}
+
+                    <div class="content-prompt">
+                        <strong>Prompt:</strong> ${this.escapeHtml(content.prompt)}
+                    </div>
                 `;
 
                 // Add new content at the beginning
