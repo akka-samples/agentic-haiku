@@ -1,7 +1,7 @@
-package com.example.domain;
+package akka.haiku.domain;
 
-import com.example.domain.TextInputCollectorEvent.AllInputsCollected;
-import com.example.domain.TextInputCollectorEvent.TextInputAdded;
+import akka.haiku.domain.TextInputCollectorEvent.AllInputsCollected;
+import akka.haiku.domain.TextInputCollectorEvent.TextInputAdded;
 
 import java.util.ArrayList;
 import java.util.List;

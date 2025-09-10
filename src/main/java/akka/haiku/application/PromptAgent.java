@@ -1,4 +1,4 @@
-package com.example.application;
+package akka.haiku.application;
 
 import akka.javasdk.agent.Agent;
 import akka.javasdk.agent.MemoryProvider;

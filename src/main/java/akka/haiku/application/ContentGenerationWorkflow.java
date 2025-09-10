@@ -1,12 +1,12 @@
-package com.example.application;
+package akka.haiku.application;
 
 import akka.Done;
 import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.workflow.Workflow;
 import akka.javasdk.workflow.WorkflowContext;
-import com.example.application.PromptAgent.PromptInputs;
-import com.example.domain.ContentGeneration;
+import akka.haiku.application.PromptAgent.PromptInputs;
+import akka.haiku.domain.ContentGeneration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,4 +1,4 @@
-package com.example.application;
+package akka.haiku.application;
 
 public interface ImageGenerator {
 

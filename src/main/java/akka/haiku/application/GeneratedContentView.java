@@ -1,13 +1,13 @@
-package com.example.application;
+package akka.haiku.application;
 
 import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.annotations.Consume;
 import akka.javasdk.annotations.Query;
 import akka.javasdk.view.TableUpdater;
 import akka.javasdk.view.View;
-import com.example.domain.ContentGeneration;
-import com.example.domain.Haiku;
-import com.example.domain.Image;
+import akka.haiku.domain.ContentGeneration;
+import akka.haiku.domain.Haiku;
+import akka.haiku.domain.Image;
 
 import java.util.Optional;
 

@@ -1,13 +1,13 @@
-package com.example.application;
+package akka.haiku.application;
 
 import akka.Done;
 import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.eventsourcedentity.EventSourcedEntity;
 import akka.javasdk.eventsourcedentity.EventSourcedEntityContext;
-import com.example.domain.TextInputCollector;
-import com.example.domain.TextInputCollectorEvent;
-import com.example.domain.TextInputCollectorEvent.AllInputsCollected;
-import com.example.domain.TextInputCollectorEvent.TextInputAdded;
+import akka.haiku.domain.TextInputCollector;
+import akka.haiku.domain.TextInputCollectorEvent;
+import akka.haiku.domain.TextInputCollectorEvent.AllInputsCollected;
+import akka.haiku.domain.TextInputCollectorEvent.TextInputAdded;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

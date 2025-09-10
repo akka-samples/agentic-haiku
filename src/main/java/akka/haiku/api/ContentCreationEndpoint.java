@@ -1,4 +1,4 @@
-package com.example.api;
+package akka.haiku.api;
 
 import akka.http.javadsl.model.HttpResponse;
 import akka.javasdk.annotations.Acl;
@@ -7,9 +7,9 @@ import akka.javasdk.annotations.http.HttpEndpoint;
 import akka.javasdk.annotations.http.Post;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.http.HttpResponses;
-import com.example.application.GeneratedContentView;
-import com.example.application.InputsViews;
-import com.example.application.TextInputCollectorEntity;
+import akka.haiku.application.GeneratedContentView;
+import akka.haiku.application.InputsViews;
+import akka.haiku.application.TextInputCollectorEntity;
 
 import java.util.List;
 

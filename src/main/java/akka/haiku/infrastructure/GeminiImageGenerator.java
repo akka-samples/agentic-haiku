@@ -1,6 +1,6 @@
-package com.example.infrastructure;
+package akka.haiku.infrastructure;
 
-import com.example.application.ImageGenerator;
+import akka.haiku.application.ImageGenerator;
 
 public class GeminiImageGenerator implements ImageGenerator {
 

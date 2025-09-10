@@ -1,4 +1,4 @@
-package com.example.domain;
+package akka.haiku.domain;
 
 public record Image(String url) {
 }
