@@ -5,13 +5,11 @@ import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.workflow.Workflow;
 import akka.javasdk.workflow.WorkflowContext;
-import akka.haiku.application.PromptAgent.PromptInputs;
 import akka.haiku.domain.ContentGeneration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.util.List;
 
 import static akka.Done.done;
 
@@ -29,7 +27,7 @@ public class ContentGenerationWorkflow extends Workflow<ContentGeneration> {
     this.imageGenerator = imageGenerator;
   }
 
-  public record StartGeneration(String collectionId, List<String> inputs) {
+  public record StartGeneration(String inputId, String input) {
   }
 
   @Override
@@ -44,26 +42,12 @@ public class ContentGenerationWorkflow extends Workflow<ContentGeneration> {
       log.info("Already in progress, ignoring");
       return effects().reply(done());
     } else {
-      log.info("Starting image generation with inputs: {}", startGeneration.inputs);
-      ContentGeneration contentGeneration = ContentGeneration.of(startGeneration.collectionId, startGeneration.inputs);
+      log.info("Starting image generation with inputs: {}", startGeneration);
+      ContentGeneration contentGeneration = ContentGeneration.of(startGeneration.inputId, startGeneration.input);
       return effects().updateState(contentGeneration)
-        .transitionTo(ContentGenerationWorkflow::composePrompt)
+        .transitionTo(ContentGenerationWorkflow::generateImage)
         .thenReply(done());
     }
-  }
-
-  private StepEffect composePrompt(){
-
-    var prompt = componentClient.forAgent()
-      .inSession(workflowId)
-      .method(PromptAgent::composePrompt)
-      .invoke(new PromptInputs(currentState().inputs()));
-
-    log.info("Prompt composed: {}", prompt);
-
-    return stepEffects()
-      .updateState(currentState().withImagePrompt(prompt))
-      .thenTransitionTo(ContentGenerationWorkflow::generateImage);
   }
 
   private StepEffect generateImage(){

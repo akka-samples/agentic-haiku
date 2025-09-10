@@ -17,13 +17,13 @@ public class InputConsumer extends Consumer {
     this.componentClient = componentClient;
   }
 
-  public Effect onEvent(TextInputCollectorEvent.AllInputsCollected event) {
+  public Effect onEvent(TextInputCollectorEvent.TextInputAdded event) {
 
-    String workflowId = event.collectorId() + messageContext().metadata().asCloudEvent().sequence().orElse(0L);
+    String workflowId = "workflow-" + messageContext().metadata().asCloudEvent().sequence().orElse(0L);
 
     componentClient.forWorkflow(workflowId)
       .method(ContentGenerationWorkflow::start)
-      .invoke(new StartGeneration(event.collectionId(), event.inputs()));
+      .invoke(new StartGeneration(event.inputId(), event.input()));
 
     return effects().done();
   }

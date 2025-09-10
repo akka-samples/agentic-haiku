@@ -566,7 +566,7 @@
                 this.submitBtn = document.getElementById('submitBtn');
                 this.status = document.getElementById('status');
                 
-                // Track collected inputs and generated content by collectionId
+                // Track collected inputs and generated content by inputId
                 this.collectedInputsMap = new Map();
                 this.generatedContentMap = new Map();
                 
@@ -658,13 +658,13 @@
             }
 
             handleCollectedInputs(collectedInputs) {
-                const { collectionId } = collectedInputs;
+                const { inputId } = collectedInputs;
                 
                 // Store the collected inputs
-                this.collectedInputsMap.set(collectionId, collectedInputs);
+                this.collectedInputsMap.set(inputId, collectedInputs);
                 
-                // Check if we already have generated content for this collectionId
-                if (!this.generatedContentMap.has(collectionId)) {
+                // Check if we already have generated content for this inputId
+                if (!this.generatedContentMap.has(inputId)) {
                     // Show collected inputs since no generated content exists yet
                     this.addCollectedInputsItem(collectedInputs);
                 }
@@ -672,13 +672,13 @@
             }
 
             handleGeneratedContent(content) {
-                const { collectionId } = content;
+                const { inputId } = content;
                 
                 // Store the generated content
-                this.generatedContentMap.set(collectionId, content);
+                this.generatedContentMap.set(inputId, content);
                 
-                // Remove any existing collected inputs item for this collectionId
-                this.removeCollectedInputsItem(collectionId);
+                // Remove any existing collected inputs item for this inputId
+                this.removeCollectedInputsItem(inputId);
                 
                 // Add the generated content
                 this.addContentItem(content);
@@ -693,21 +693,19 @@
 
                 const collectedItem = document.createElement('div');
                 collectedItem.className = 'collected-inputs-item processing';
-                collectedItem.setAttribute('data-collection-id', collectedInputs.collectionId);
+                collectedItem.setAttribute('data-input-id', collectedInputs.inputId);
                 
                 const timestamp = new Date(collectedInputs.createdAt).toLocaleString();
 
                 collectedItem.innerHTML = `
                     <div class="collected-meta">
                         <span class="content-timestamp">${timestamp}</span>
-                        <span class="collection-id">ID: ${this.escapeHtml(collectedInputs.collectionId)}</span>
+                        <span class="collection-id">ID: ${this.escapeHtml(collectedInputs.inputId)}</span>
                     </div>
                     
                     <div class="collected-inputs-list">
-                        <h4>Collected Inputs (${collectedInputs.inputs.length}):</h4>
-                        ${collectedInputs.inputs.map(input => 
-                            `<div class="collected-input-text">${this.escapeHtml(input)}</div>`
-                        ).join('')}
+                        <h4>Collected Input:</h4>
+                        <div class="collected-input-text">${this.escapeHtml(collectedInputs.input)}</div>
                     </div>
                 `;
 
@@ -725,8 +723,8 @@
                 }, 100);
             }
 
-            removeCollectedInputsItem(collectionId) {
-                const existingItem = this.contentGrid.querySelector(`[data-collection-id="${collectionId}"]`);
+            removeCollectedInputsItem(inputId) {
+                const existingItem = this.contentGrid.querySelector(`[data-input-id="${inputId}"]`);
                 if (existingItem) {
                     existingItem.style.transition = 'opacity 0.3s, transform 0.3s';
                     existingItem.style.opacity = '0';
@@ -749,7 +747,7 @@
 
                 const contentItem = document.createElement('div');
                 contentItem.className = 'content-item';
-                contentItem.setAttribute('data-collection-id', content.collectionId);
+                contentItem.setAttribute('data-input-id', content.inputId);
                 
                 const timestamp = new Date(content.generateAt).toLocaleString();
                 const hasHaiku = content.haiku && content.haiku.line1;

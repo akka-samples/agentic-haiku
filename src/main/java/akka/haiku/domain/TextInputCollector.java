@@ -1,7 +1,8 @@
 package akka.haiku.domain;
 
-import akka.haiku.domain.TextInputCollectorEvent.AllInputsCollected;
+
 import akka.haiku.domain.TextInputCollectorEvent.TextInputAdded;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,8 +24,7 @@ public record TextInputCollector(String collectorId, int limit, List<String> inp
 
   public TextInputCollector apply(TextInputCollectorEvent event) {
     return switch (event) {
-      case TextInputAdded textInputAdded -> add(textInputAdded.input());
-      case AllInputsCollected allInputsCollected -> this;
+      case TextInputAdded textInputAdded -> add(textInputAdded.input()); //TODO add limit
     };
   }
 
