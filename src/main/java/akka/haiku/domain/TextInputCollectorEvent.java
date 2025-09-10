@@ -1,9 +1,6 @@
 package akka.haiku.domain;
 
-import java.util.List;
-
 public sealed interface TextInputCollectorEvent {
 
-  record TextInputAdded(String input) implements TextInputCollectorEvent {}
-  record AllInputsCollected(String collectorId, String collectionId, List<String> inputs) implements TextInputCollectorEvent {}
+  record TextInputAdded(String collectorId, String inputId, String input) implements TextInputCollectorEvent {}
 }

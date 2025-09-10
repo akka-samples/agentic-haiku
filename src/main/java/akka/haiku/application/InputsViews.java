@@ -8,22 +8,18 @@ import akka.javasdk.view.View;
 import akka.haiku.domain.TextInputCollectorEvent;
 
 import java.time.Instant;
-import java.util.Collection;
-import java.util.List;
 
 @ComponentId("inputs-view")
 public class InputsViews extends View {
 
-  public record CollectedInputs(Instant createdAt, String collectorId, String collectionId, List<String> inputs) {}
-
-  public record CollectedInputsEntries(Collection<CollectedInputs> entries) {}
+  public record CollectedInputs(Instant createdAt, String eventId, String inputId, String input) {}
 
   @Consume.FromEventSourcedEntity(value = TextInputCollectorEntity.class, ignoreUnknown = true)
   public static class ImagesUpdater extends TableUpdater<CollectedInputs> {
 
-    public Effect<CollectedInputs> onEvent(TextInputCollectorEvent.AllInputsCollected allInputsCollected) {
+    public Effect<CollectedInputs> onEvent(TextInputCollectorEvent.TextInputAdded textInputAdded) {
       var createdAt = updateContext().metadata().asCloudEvent().time().orElseThrow().toInstant();
-      return effects().updateRow(new CollectedInputs(createdAt, allInputsCollected.collectorId(), allInputsCollected.collectionId(), allInputsCollected.inputs()));
+      return effects().updateRow(new CollectedInputs(createdAt, textInputAdded.collectorId(), textInputAdded.inputId(), textInputAdded.input()));
     }
   }
 
