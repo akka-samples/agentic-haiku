@@ -12,11 +12,11 @@ public record UserInput(String originalInput, Eval eval) {
   }
 
   public boolean isRejected() {
-    return eval == Eval.HARMFUL_CONTENT || eval == Eval.NEGATIVE;
+    return eval == Eval.TOXIC_CONTENT || eval == Eval.NEGATIVE;
   }
 
   public boolean isAccepted() {
-    return eval == Eval.NEUTRAL || eval == Eval.POSITIVE || eval == Eval.NOT_HARMFUL_CONTENT;
+    return eval == Eval.NEUTRAL || eval == Eval.POSITIVE || eval == Eval.NON_TOXIC_CONTENT;
   }
 
   public boolean isNegative() {
@@ -25,8 +25,8 @@ public record UserInput(String originalInput, Eval eval) {
 
   public enum Eval {
     UNKNOWN,
-    HARMFUL_CONTENT,
-    NOT_HARMFUL_CONTENT,
+    TOXIC_CONTENT,
+    NON_TOXIC_CONTENT,
     NEGATIVE,
     NEUTRAL,
     POSITIVE,

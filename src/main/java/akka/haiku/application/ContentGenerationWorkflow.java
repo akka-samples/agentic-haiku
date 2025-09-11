@@ -29,7 +29,7 @@ public class ContentGenerationWorkflow extends Workflow<ContentGeneration> {
     this.imageGenerator = imageGenerator;
   }
 
-  public record StartGeneration(String inputId, String input) {
+  public record StartGeneration(String input) {
   }
 
   @Override
@@ -44,21 +44,23 @@ public class ContentGenerationWorkflow extends Workflow<ContentGeneration> {
       log.info("Already in progress, ignoring");
       return effects().reply(done());
     } else {
-      log.info("Starting image generation with inputs: {}", startGeneration);
-      ContentGeneration contentGeneration = ContentGeneration.of(startGeneration.inputId, startGeneration.input);
-      return effects().updateState(contentGeneration)
-        .transitionTo(ContentGenerationWorkflow::checkForHarmfulContent)
+      log.info("Starting image generation for input: {}", startGeneration);
+
+      return effects()
+        .updateState(ContentGeneration.empty())
+        .transitionTo(ContentGenerationWorkflow::checkForToxicContent)
         .withInput(UserInput.of(startGeneration.input))
         .thenReply(done());
     }
   }
 
-  private StepEffect checkForHarmfulContent(UserInput userInput) {
+  private StepEffect checkForToxicContent(UserInput userInput) {
+
     var evaluated =
       componentClient
         .forAgent()
         .inSession(this.workflowId)
-        .method(HarmfulContentDetectorAgent::evaluate)
+        .method(ToxicityDetectorAgent::evaluateContent)
         .invoke(userInput);
 
     if (evaluated.isAccepted()) {
@@ -68,11 +70,12 @@ public class ContentGenerationWorkflow extends Workflow<ContentGeneration> {
         .withInput(evaluated);
 
     } else {
-      log.debug("Content is rejected, discarding it.");
+      log.debug("Content is rejected.");
       return stepEffects()
         .thenTransitionTo(ContentGenerationWorkflow::generateCensoredImage);
     }
   }
+
 
   private StepEffect analyseSentiment(UserInput userInput) {
     var evaluated =
@@ -90,6 +93,7 @@ public class ContentGenerationWorkflow extends Workflow<ContentGeneration> {
     } else {
       log.debug("Content is positive or neutral, generating a Haiku...");
       return stepEffects()
+        .updateState(currentState().withUserInput(userInput.originalInput()))
         .thenTransitionTo(ContentGenerationWorkflow::generateHaiku)
         .withInput(evaluated);
     }
@@ -105,6 +109,7 @@ public class ContentGenerationWorkflow extends Workflow<ContentGeneration> {
         .invoke(userInput.originalInput());
 
     return stepEffects()
+      .updateState(currentState().withHaiku(haiku))
       .thenTransitionTo(ContentGenerationWorkflow::generateImage)
       .withInput(haiku);
   }
@@ -121,14 +126,8 @@ public class ContentGenerationWorkflow extends Workflow<ContentGeneration> {
   }
 
   private StepEffect generateCensoredImage() {
-
-    // TODO: use a fixed image
-    var url = imageGenerator.generateImage("Generate an image of a warning icon or symbol that clearly represents censored or restricted content.");
-
-    log.info("Censored image generated: {}", url);
-
     return stepEffects()
-      .updateState(currentState().withImageUrl(url))
+      .updateState(currentState().withImageUrl("img/censored.png"))
       .thenEnd();
   }
 

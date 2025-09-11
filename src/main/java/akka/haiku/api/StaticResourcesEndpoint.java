@@ -1,5 +1,6 @@
 package akka.haiku.api;
 
+import akka.http.javadsl.model.HttpRequest;
 import akka.http.javadsl.model.HttpResponse;
 import akka.javasdk.annotations.Acl;
 import akka.javasdk.annotations.http.Get;
@@ -13,5 +14,10 @@ public class StaticResourcesEndpoint {
   @Get("/")
   public HttpResponse index() {
     return HttpResponses.staticResource("index.html");
+  }
+
+  @Get("/**")
+  public HttpResponse allResources(HttpRequest request) {
+    return HttpResponses.staticResource(request, "/");
   }
 }
