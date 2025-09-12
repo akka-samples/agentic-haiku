@@ -1,4 +1,4 @@
-package akka.haiku;
+package akka.haiku.generator;
 
 import akka.javasdk.testkit.TestKitSupport;
 import org.junit.jupiter.api.Test;

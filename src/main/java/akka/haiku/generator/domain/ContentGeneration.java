@@ -1,4 +1,4 @@
-package akka.haiku.domain;
+package akka.haiku.generator.domain;
 
 import java.time.Instant;
 import java.util.Optional;

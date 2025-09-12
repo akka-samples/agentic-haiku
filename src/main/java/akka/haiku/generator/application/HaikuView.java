@@ -1,23 +1,23 @@
-package akka.haiku.application;
+package akka.haiku.generator.application;
 
 import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.annotations.Consume;
 import akka.javasdk.annotations.Query;
 import akka.javasdk.view.TableUpdater;
 import akka.javasdk.view.View;
-import akka.haiku.domain.ContentGeneration;
-import akka.haiku.domain.Haiku;
-import akka.haiku.domain.Image;
+import akka.haiku.generator.domain.ContentGeneration;
+import akka.haiku.generator.domain.Haiku;
+import akka.haiku.generator.domain.Image;
 
 import java.util.Optional;
 
 @ComponentId("generated-image-view")
-public class GeneratedContentView extends View {
+public class HaikuView extends View {
 
 
   public record GeneratedContent(Long generateAt, String prompt, Optional<Haiku> haiku, Optional<Image> image){}
 
-  @Consume.FromWorkflow(ContentGenerationWorkflow.class)
+  @Consume.FromWorkflow(AgentTeamWorkflow.class)
   public static class ImagesUpdater extends TableUpdater<GeneratedContent> {
 
     public Effect<GeneratedContent> onChange(ContentGeneration contentGeneration) {

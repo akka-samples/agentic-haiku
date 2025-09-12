@@ -1,9 +1,9 @@
-package akka.haiku.application;
+package akka.haiku.generator.application;
 
 import akka.Done;
-import akka.haiku.domain.ContentGeneration;
-import akka.haiku.domain.Haiku;
-import akka.haiku.domain.UserInput;
+import akka.haiku.generator.domain.ContentGeneration;
+import akka.haiku.generator.domain.Haiku;
+import akka.haiku.generator.domain.UserInput;
 import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.workflow.Workflow;
@@ -16,14 +16,14 @@ import java.time.Duration;
 import static akka.Done.done;
 
 @ComponentId("image-generation-workflow")
-public class ContentGenerationWorkflow extends Workflow<ContentGeneration> {
+public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
 
-  private static final Logger log = LoggerFactory.getLogger(ContentGenerationWorkflow.class);
+  private static final Logger log = LoggerFactory.getLogger(AgentTeamWorkflow.class);
   private final ComponentClient componentClient;
   private final String workflowId;
   private final ImageGenerator imageGenerator;
 
-  public ContentGenerationWorkflow(WorkflowContext workflowContext, ComponentClient componentClient, ImageGenerator imageGenerator) {
+  public AgentTeamWorkflow(WorkflowContext workflowContext, ComponentClient componentClient, ImageGenerator imageGenerator) {
     this.componentClient = componentClient;
     this.workflowId =workflowContext.workflowId();
     this.imageGenerator = imageGenerator;
@@ -48,7 +48,7 @@ public class ContentGenerationWorkflow extends Workflow<ContentGeneration> {
 
       return effects()
         .updateState(ContentGeneration.empty())
-        .transitionTo(ContentGenerationWorkflow::checkForToxicContent)
+        .transitionTo(AgentTeamWorkflow::checkForToxicContent)
         .withInput(UserInput.of(startGeneration.input))
         .thenReply(done());
     }
@@ -66,16 +66,15 @@ public class ContentGenerationWorkflow extends Workflow<ContentGeneration> {
     if (evaluated.isAccepted()) {
       log.debug("Content is accepted.");
       return stepEffects()
-        .thenTransitionTo(ContentGenerationWorkflow::analyseSentiment)
+        .thenTransitionTo(AgentTeamWorkflow::analyseSentiment)
         .withInput(evaluated);
 
     } else {
       log.debug("Content is rejected.");
       return stepEffects()
-        .thenTransitionTo(ContentGenerationWorkflow::generateCensoredImage);
+        .thenTransitionTo(AgentTeamWorkflow::generateCensoredImage);
     }
   }
-
 
   private StepEffect analyseSentiment(UserInput userInput) {
     var evaluated =
@@ -88,13 +87,13 @@ public class ContentGenerationWorkflow extends Workflow<ContentGeneration> {
     if (evaluated.isNegative()) {
       log.debug("Content is negative, discarding it.");
       return stepEffects()
-        .thenTransitionTo(ContentGenerationWorkflow::generateCensoredImage);
+        .thenTransitionTo(AgentTeamWorkflow::generateCensoredImage);
 
     } else {
       log.debug("Content is positive or neutral, generating a Haiku...");
       return stepEffects()
         .updateState(currentState().withUserInput(userInput.originalInput()))
-        .thenTransitionTo(ContentGenerationWorkflow::generateHaiku)
+        .thenTransitionTo(AgentTeamWorkflow::generateHaiku)
         .withInput(evaluated);
     }
   }
@@ -110,7 +109,7 @@ public class ContentGenerationWorkflow extends Workflow<ContentGeneration> {
 
     return stepEffects()
       .updateState(currentState().withHaiku(haiku))
-      .thenTransitionTo(ContentGenerationWorkflow::generateImage)
+      .thenTransitionTo(AgentTeamWorkflow::generateImage)
       .withInput(haiku);
   }
 
