@@ -11,8 +11,6 @@ import akka.javasdk.workflow.WorkflowContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
-
 import static akka.Done.done;
 import static java.time.Duration.ofSeconds;
 
@@ -41,9 +39,9 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
   public WorkflowSettings settings() {
     return WorkflowSettings.builder()
       .defaultStepTimeout(ofSeconds(15))
-      .defaultStepRecovery(maxRetries(5).failoverTo(AgentTeamWorkflow::cancel))
+      .defaultStepRecovery(maxRetries(5).failoverTo(AgentTeamWorkflow::timeoutStep))
       .stepTimeout(AgentTeamWorkflow::generateImage, ofSeconds(30))
-      .stepRecovery(AgentTeamWorkflow::generateImage, maxRetries(3).failoverTo(AgentTeamWorkflow::cancel))
+      .stepRecovery(AgentTeamWorkflow::generateImage, maxRetries(3).failoverTo(AgentTeamWorkflow::timeoutStep))
       .build();
   }
 
@@ -164,11 +162,11 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
       .thenEnd();
   }
 
-  private StepEffect cancel() {
+  private StepEffect timeoutStep() {
     return stepEffects()
       .updateState(currentState()
         .addProgressLine("Cancelling image generation due to timeout.")
-        .withImageUrl("static/img/censored.png"))
+        .withImageUrl("static/img/time-is-up.png"))
       .thenEnd();
   }
 

@@ -39,7 +39,8 @@ public record AkkaHaikusEndpoint(ComponentClient componentClient, Materializer m
         .method(AgentTeamWorkflow::start)
         .invoke(new AgentTeamWorkflow.StartGeneration(input.message));
 
-    return getHaiku(haikuId);
+    var location = "/haikus/" + haikuId;
+    return HttpResponses.created(location, location);
   }
 
   @Get("/{haikuId}")
