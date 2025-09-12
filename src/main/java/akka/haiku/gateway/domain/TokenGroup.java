@@ -23,7 +23,7 @@ public record TokenGroup(String groupId, List<Token> tokens) {
   public TokenGroup reserveToken(Token token) {
     tokens.stream()
       .filter(t -> t.value().equals(token.value()))
-      .forEach(Token::setInUse);
+      .forEach(Token::reserve);
     return this;
   }
 
@@ -34,7 +34,7 @@ public record TokenGroup(String groupId, List<Token> tokens) {
   public TokenGroup markAsUsed(String token) {
     tokens.stream()
       .filter(t -> t.value().equals(token))
-      .forEach(Token::setUsed);
+      .forEach(Token::use);
     return this;
   }
 

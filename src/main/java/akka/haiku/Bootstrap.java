@@ -1,7 +1,6 @@
 package akka.haiku;
 
 import akka.haiku.gateway.application.TokenGroupEntity;
-import akka.haiku.generator.infrastructure.FixedImageGenerator;
 import akka.haiku.generator.infrastructure.GeminiImageGenerator;
 import akka.javasdk.DependencyProvider;
 import akka.javasdk.ServiceSetup;
