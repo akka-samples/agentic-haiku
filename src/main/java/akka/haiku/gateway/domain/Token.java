@@ -18,15 +18,15 @@ public class Token {
     return status;
   }
 
-  public void setInUse() {
-    status = TokenStatus.IN_USE;
+  public void reserve() {
+    status = TokenStatus.RESERVED;
   }
 
-  public void setUsed() {
+  public void use() {
     status = TokenStatus.USED;
   }
 
   public boolean isValid(String token) {
-    return token.equals(value) && status == TokenStatus.IN_USE;
+    return token.equals(value) && status == TokenStatus.RESERVED;
   }
 }

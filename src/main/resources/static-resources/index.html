@@ -13,6 +13,21 @@
             <p>Submit text inputs to generate creative content</p>
         </div>
 
+        <div class="qr-section">
+            <h2>Scan QR Code to Submit Input</h2>
+            <div class="qr-container" id="qrContainer">
+                <div class="no-qr">
+                    <span class="loading"></span> Loading QR code...
+                </div>
+            </div>
+            <div class="qr-or-section">
+                <span>OR</span>
+            </div>
+            <div class="direct-link-section">
+                <a href="#" class="direct-link-btn" id="directLinkBtn">Use Direct Link Instead</a>
+            </div>
+        </div>
+
         <div class="input-section">
             <form class="input-form" id="inputForm">
                 <input 
@@ -52,6 +67,100 @@
     </div>
 
     <script>
+        class QrCodeManager {
+            constructor() {
+                this.qrEventSource = null;
+                this.qrContainer = document.getElementById('qrContainer');
+                this.directLinkBtn = document.getElementById('directLinkBtn');
+                this.currentQrCode = null;
+                
+                this.initializeQrStream();
+                this.initializeDirectLink();
+            }
+
+            initializeQrStream() {
+                try {
+                    this.qrEventSource = new EventSource('/qrcodes');
+                    
+                    this.qrEventSource.onopen = () => {
+                        console.log('QR code stream connected');
+                    };
+
+                    this.qrEventSource.onmessage = (event) => {
+                        try {
+                            const qrCode = JSON.parse(event.data);
+                            this.handleQrCode(qrCode);
+                        } catch (error) {
+                            console.error('Error parsing QR code:', error);
+                        }
+                    };
+
+                    this.qrEventSource.onerror = (error) => {
+                        console.error('QR code EventSource error:', error);
+                        this.showQrError();
+                        
+                        // Attempt to reconnect after 5 seconds
+                        setTimeout(() => {
+                            if (this.qrEventSource.readyState === EventSource.CLOSED) {
+                                this.initializeQrStream();
+                            }
+                        }, 5000);
+                    };
+                } catch (error) {
+                    console.error('Failed to initialize QR code EventSource:', error);
+                    this.showQrError();
+                }
+            }
+
+            handleQrCode(qrCode) {
+                this.currentQrCode = qrCode;
+                
+                this.qrContainer.innerHTML = `
+                    <div class="qr-code-display">
+                        <img src="${this.escapeHtml(qrCode.qrCodeUrl)}" alt="QR Code" class="qr-image" />
+                        <p class="qr-info">Scan this QR code with your phone to submit input</p>
+                        <p class="qr-id">Group ID: ${this.escapeHtml(qrCode.tokenGroupId)}</p>
+                    </div>
+                `;
+                
+                // Update direct link
+                this.updateDirectLink(qrCode.tokenGroupId);
+            }
+
+            showQrError() {
+                this.qrContainer.innerHTML = `
+                    <div class="no-qr error">
+                        ❌ Failed to load QR code - attempting to reconnect...
+                    </div>
+                `;
+            }
+
+            updateDirectLink(tokenGroupId) {
+                this.directLinkBtn.href = `http://localhost:9000/gateway/${tokenGroupId}`;
+            }
+
+            initializeDirectLink() {
+                this.directLinkBtn.addEventListener('click', (e) => {
+                    if (!this.currentQrCode) {
+                        e.preventDefault();
+                        alert('QR code not loaded yet. Please wait...');
+                    }
+                });
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            destroy() {
+                if (this.qrEventSource) {
+                    this.qrEventSource.close();
+                }
+            }
+        }
+
         class InputsManager {
             constructor() {
                 this.inputsList = document.getElementById('inputsList');
@@ -458,16 +567,21 @@
         }
 
         // Initialize the application
+        let qrCodeManager;
         let contentGenerator;
         let inputsManager;
         
         document.addEventListener('DOMContentLoaded', () => {
+            qrCodeManager = new QrCodeManager();
             contentGenerator = new ContentGenerator();
             inputsManager = new InputsManager();
         });
 
         // Clean up on page unload
         window.addEventListener('beforeunload', () => {
+            if (qrCodeManager) {
+                qrCodeManager.destroy();
+            }
             if (contentGenerator) {
                 contentGenerator.destroy();
             }

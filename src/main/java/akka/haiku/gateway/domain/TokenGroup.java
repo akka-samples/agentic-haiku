@@ -10,9 +10,9 @@ public record TokenGroup(String groupId, List<Token> tokens) {
       throw new IllegalArgumentException("Size must be greater than 0");
     } else {
       List<Token> tokens = java.util.stream.IntStream.range(0, size)
-          .mapToObj(i -> new Token(java.util.UUID.randomUUID().toString(), TokenStatus.AVAILABLE))
-          .toList();
-      return new TokenGroup(groupId,tokens);
+        .mapToObj(i -> new Token(java.util.UUID.randomUUID().toString(), TokenStatus.AVAILABLE))
+        .toList();
+      return new TokenGroup(groupId, tokens);
     }
   }
 
@@ -23,7 +23,7 @@ public record TokenGroup(String groupId, List<Token> tokens) {
   public TokenGroup reserveToken(Token token) {
     tokens.stream()
       .filter(t -> t.value().equals(token.value()))
-      .forEach(Token::setInUse);
+      .forEach(Token::reserve);
     return this;
   }
 
@@ -34,7 +34,7 @@ public record TokenGroup(String groupId, List<Token> tokens) {
   public TokenGroup markAsUsed(String token) {
     tokens.stream()
       .filter(t -> t.value().equals(token))
-      .forEach(Token::setUsed);
+      .forEach(Token::use);
     return this;
   }
 
@@ -44,5 +44,9 @@ public record TokenGroup(String groupId, List<Token> tokens) {
 
   public boolean hasAvailableTokens() {
     return tokens.stream().anyMatch(t -> t.status() == TokenStatus.AVAILABLE);
+  }
+
+  public boolean isNewlyCreated() {
+    return tokens.stream().allMatch(t -> t.status() == TokenStatus.AVAILABLE);
   }
 }
