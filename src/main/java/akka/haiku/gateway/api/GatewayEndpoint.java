@@ -51,14 +51,14 @@ public class GatewayEndpoint {
 
       return HttpResponse.create()
         .withStatus(StatusCodes.FOUND)
-        .addHeader(Location.create("/form"))
+        .addHeader(Location.create("/form.html"))
         .addHeader(SetCookie.create(HttpCookie.create("token", token).withPath("/")))
         .addHeader(SetCookie.create(HttpCookie.create("tokenGroupId", tokenGroupId).withPath("/")));
     } catch (CommandException e) {
       log.error(e.getMessage(), e);
       return HttpResponse.create()
         .withStatus(StatusCodes.FOUND)
-        .addHeader(Location.create("/scan-qr-code"));
+        .addHeader(Location.create("/scan-qr-code.html"));
     }
   }
 
