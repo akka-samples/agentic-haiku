@@ -1,4 +1,4 @@
-package akka.haiku.domain;
+package akka.haiku.generator.domain;
 
 public record Haiku(String line1, String line2, String line3) {
 

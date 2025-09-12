@@ -1,4 +1,4 @@
-# Imagentic - Image Generation Service
+# Akka Haiku - Haiku and Image Generation Service
 
 **Example curl command:**
 ```shell

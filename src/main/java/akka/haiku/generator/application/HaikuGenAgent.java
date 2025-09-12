@@ -1,6 +1,6 @@
-package akka.haiku.application;
+package akka.haiku.generator.application;
 
-import akka.haiku.domain.Haiku;
+import akka.haiku.generator.domain.Haiku;
 import akka.javasdk.agent.Agent;
 import akka.javasdk.annotations.ComponentId;
 

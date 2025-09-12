@@ -1,6 +1,6 @@
-package akka.haiku.infrastructure;
+package akka.haiku.generator.infrastructure;
 
-import akka.haiku.application.ImageGenerator;
+import akka.haiku.generator.application.ImageGenerator;
 import com.google.cloud.aiplatform.v1.EndpointName;
 import com.google.cloud.aiplatform.v1.PredictResponse;
 import com.google.cloud.aiplatform.v1.PredictionServiceClient;

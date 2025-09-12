@@ -1,9 +1,9 @@
-package akka.haiku;
+package akka.haiku.generator;
 
 import akka.javasdk.DependencyProvider;
 import akka.javasdk.ServiceSetup;
 import akka.javasdk.annotations.Setup;
-import akka.haiku.infrastructure.GeminiImageGenerator;
+import akka.haiku.generator.infrastructure.GeminiImageGenerator;
 import com.typesafe.config.Config;
 
 @Setup

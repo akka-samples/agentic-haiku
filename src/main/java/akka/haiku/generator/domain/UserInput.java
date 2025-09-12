@@ -1,4 +1,4 @@
-package akka.haiku.domain;
+package akka.haiku.generator.domain;
 
 public record UserInput(String originalInput, Eval eval) {
 
