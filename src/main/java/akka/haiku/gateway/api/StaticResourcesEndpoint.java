@@ -1,6 +1,5 @@
-package akka.haiku.generator.api;
+package akka.haiku.gateway.api;
 
-import akka.http.javadsl.model.HttpRequest;
 import akka.http.javadsl.model.HttpResponse;
 import akka.javasdk.annotations.Acl;
 import akka.javasdk.annotations.http.Get;
@@ -16,8 +15,18 @@ public class StaticResourcesEndpoint {
     return HttpResponses.staticResource("index.html");
   }
 
-  @Get("/**")
-  public HttpResponse allResources(HttpRequest request) {
-    return HttpResponses.staticResource(request, "/");
+  @Get("/img/censored.png")
+  public HttpResponse censoredImage() {
+    return HttpResponses.staticResource("/img/censored.png");
+  }
+
+  @Get("/form")
+  public HttpResponse form() {
+    return HttpResponses.staticResource("form.html");
+  }
+
+  @Get("/scan-qr-code")
+  public HttpResponse scanQrCode() {
+    return HttpResponses.staticResource("scan-qr-code.html");
   }
 }
