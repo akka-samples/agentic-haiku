@@ -1,4 +1,4 @@
-package akka.haiku.generator.api;
+package akka.haiku.gateway.api;
 
 import akka.http.javadsl.model.HttpRequest;
 import akka.http.javadsl.model.HttpResponse;
