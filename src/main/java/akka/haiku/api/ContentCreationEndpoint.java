@@ -22,14 +22,9 @@ import java.util.List;
 // and often set more limited
 @Acl(allow = @Acl.Matcher(principal = Acl.Principal.INTERNET))
 @HttpEndpoint
-public class ContentCreationEndpoint {
+public record ContentCreationEndpoint(ComponentClient componentClient) {
 
-  public record AddInputRequest(String input) {}
-
-  private final ComponentClient componentClient;
-
-  public ContentCreationEndpoint(ComponentClient componentClient) {
-    this.componentClient = componentClient;
+  public record AddInputRequest(String input) {
   }
 
   @Post("/inputs")
