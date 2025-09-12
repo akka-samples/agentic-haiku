@@ -1,7 +1,7 @@
 package akka.haiku.gateway.api;
 
-import akka.haiku.application.TextInputCollectorEntity;
 import akka.haiku.gateway.application.TokenGroupEntity;
+import akka.haiku.generator.application.AgentTeamWorkflow;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.model.headers.HttpCookie;
@@ -87,11 +87,10 @@ public class GatewayEndpoint {
         .method(TokenGroupEntity::tokenUsed)
         .invoke(request.token);
 
-      //TODO call the workflow directly
       componentClient
-        .forEventSourcedEntity("collectorA")
-        .method(TextInputCollectorEntity::addTextInput)
-        .invoke(request.input);
+        .forWorkflow(request.token)
+        .method(AgentTeamWorkflow::start)
+        .invoke(new AgentTeamWorkflow.StartGeneration(request.input));
 
       return HttpResponses.ok();
     } else {

@@ -1,4 +1,4 @@
-package akka.haiku.generator;
+package akka.haiku;
 
 import akka.haiku.gateway.application.TokenGroupEntity;
 import akka.haiku.generator.infrastructure.FixedImageGenerator;
