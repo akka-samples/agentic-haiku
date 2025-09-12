@@ -25,7 +25,7 @@ public class TokenGroupEntity extends KeyValueEntity<TokenGroup> {
     if (currentState() != null) {
       return effects().reply(done());
     } else {
-      TokenGroup tokenGroup = TokenGroup.create(size);
+      TokenGroup tokenGroup = TokenGroup.create(groupId, size);
       return effects()
         .updateState(tokenGroup)
         .thenReply(done());
@@ -39,9 +39,10 @@ public class TokenGroupEntity extends KeyValueEntity<TokenGroup> {
     } else {
       return tokenGroup.getFirstAvailable()
         .map(token -> {
-          log.debug("Reserving token {}", token.value());
+          TokenGroup updatedGroup = tokenGroup.reserveToken(token);
+          log.debug("Reserving token {}, available tokes {}", token.value(), updatedGroup.availableTokens());
           return effects()
-            .updateState(tokenGroup.reserveToken(token))
+            .updateState(updatedGroup)
             .thenReply(token.value());
         })
         .orElseGet(() -> effects().error("No available tokens for " + groupId));

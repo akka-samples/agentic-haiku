@@ -17,6 +17,8 @@ import akka.javasdk.http.HttpResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static akka.http.javadsl.model.StatusCodes.UNAUTHORIZED;
+
 @Acl(allow = @Acl.Matcher(principal = Acl.Principal.INTERNET))
 @HttpEndpoint
 public class GatewayEndpoint {
@@ -65,8 +67,7 @@ public class GatewayEndpoint {
 
     if (!request.hasToken()) {
       log.debug("Rejecting, no token provided");
-      return HttpResponse.create()
-        .withStatus(StatusCodes.UNAUTHORIZED);
+      return HttpResponse.create().withStatus(UNAUTHORIZED);
     }
 
     if (!request.hasInput()) {
@@ -74,12 +75,13 @@ public class GatewayEndpoint {
       return HttpResponses.badRequest("No input provided");
     }
 
-    var isTokenValid = componentClient.forKeyValueEntity(request.tokenGroupId)
+    var tokenValid = componentClient.forKeyValueEntity(request.tokenGroupId)
       .method(TokenGroupEntity::isValid)
       .invoke(request.token);
 
-    if (isTokenValid) {
+    if (tokenValid) {
 
+      // there is a chance that we use the token without sending input, but that is not a big issue
       componentClient
         .forKeyValueEntity(request.tokenGroupId)
         .method(TokenGroupEntity::tokenUsed)
@@ -91,12 +93,10 @@ public class GatewayEndpoint {
         .method(TextInputCollectorEntity::addTextInput)
         .invoke(request.input);
 
-
       return HttpResponses.ok();
     } else {
       log.debug("Rejecting, invalid token provided");
-      return HttpResponse.create()
-        .withStatus(StatusCodes.UNAUTHORIZED);
+      return HttpResponse.create().withStatus(UNAUTHORIZED);
     }
   }
 }

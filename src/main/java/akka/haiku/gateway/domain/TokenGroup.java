@@ -3,16 +3,16 @@ package akka.haiku.gateway.domain;
 import java.util.List;
 import java.util.Optional;
 
-public record TokenGroup(List<Token> tokens) {
+public record TokenGroup(String groupId, List<Token> tokens) {
 
-  public static TokenGroup create(int size) {
+  public static TokenGroup create(String groupId, int size) {
     if (size <= 0) {
       throw new IllegalArgumentException("Size must be greater than 0");
     } else {
       List<Token> tokens = java.util.stream.IntStream.range(0, size)
           .mapToObj(i -> new Token(java.util.UUID.randomUUID().toString(), TokenStatus.AVAILABLE))
           .toList();
-      return new TokenGroup(tokens);
+      return new TokenGroup(groupId,tokens);
     }
   }
 
@@ -36,5 +36,13 @@ public record TokenGroup(List<Token> tokens) {
       .filter(t -> t.value().equals(token))
       .forEach(Token::setUsed);
     return this;
+  }
+
+  public long availableTokens() {
+    return tokens.stream().filter(t -> t.status() == TokenStatus.AVAILABLE).count();
+  }
+
+  public boolean hasAvailableTokens() {
+    return tokens.stream().anyMatch(t -> t.status() == TokenStatus.AVAILABLE);
   }
 }
