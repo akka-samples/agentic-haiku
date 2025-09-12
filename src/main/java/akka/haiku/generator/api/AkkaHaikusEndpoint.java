@@ -9,13 +9,25 @@ import akka.javasdk.annotations.http.HttpEndpoint;
 import akka.javasdk.annotations.http.Put;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.http.HttpResponses;
+import akka.pattern.RetrySettings;
+import akka.stream.Materializer;
+import akka.stream.javadsl.Source;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.atomic.AtomicReference;
+
+import static java.time.Duration.ofMillis;
+import static java.time.Duration.ofSeconds;
 
 // Opened up for access from the public internet to make the service easy to try out.
 // For actual services meant for production this must be carefully considered,
 // and often set more limited
 @Acl(allow = @Acl.Matcher(principal = Acl.Principal.INTERNET))
 @HttpEndpoint("/haikus")
-public record AkkaHaikusEndpoint(ComponentClient componentClient) {
+public record AkkaHaikusEndpoint(ComponentClient componentClient, Materializer materializer) {
+
+  private static final Logger log = LoggerFactory.getLogger(AkkaHaikusEndpoint.class);
 
   public record Input(String message) {}
 
@@ -27,10 +39,59 @@ public record AkkaHaikusEndpoint(ComponentClient componentClient) {
         .method(AgentTeamWorkflow::start)
         .invoke(new AgentTeamWorkflow.StartGeneration(input.message));
 
-    return HttpResponses.ok();
+    return getHaiku(haikuId);
   }
 
+  @Get("/{haikuId}")
+  public HttpResponse getHaiku(String haikuId) {
+
+    var queueAndSrc =
+      Source
+        .<String>queue(20).preMaterialize(materializer);
+
+    var queue = queueAndSrc.first();
+    var src = queueAndSrc.second();
+
+    AtomicReference<Integer> publishedIndex = new AtomicReference<>(0);
+
+    // a tick source to poll the workflow state
+    // workflow progress messages are pushed to a queue and sent as SSE to UI
+    Source.tick(ofMillis(500), ofSeconds(1), "tick").map(t -> {
+      log.debug("polling haiku gen state: {}", haikuId);
+
+      var state =
+        componentClient.forWorkflow(haikuId)
+          .method(AgentTeamWorkflow::getState)
+          .invoke();
+
+      var progressMessages = state.progress();
+      var size = progressMessages.size();
+
+      int publishedCount = publishedIndex.get();
+
+      if (publishedCount < size) {
+        var messagesToPublish = progressMessages.subList(publishedCount, size);
+        // we publish one by one
+        queue.offer(messagesToPublish.getFirst());
+        publishedIndex.set(publishedCount + 1);
+      }
+
+      // completed and we published all message?
+      if (state.isComplete() && publishedCount == size) {
+        log.debug("closing queue");
+        queue.complete();
+      }
+
+        return t;
+      }
+    ).run(materializer);
+
+    return HttpResponses.serverSentEvents(src);
+  }
+
+
   /**
+   *
    * Return
    */
   @Get
