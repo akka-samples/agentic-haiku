@@ -1,13 +1,11 @@
 package akka.haiku.generator.infrastructure;
 
 import akka.haiku.generator.application.ImageGenerator;
+import akka.haiku.storage.application.BlobStorage;
 import com.google.cloud.aiplatform.v1.EndpointName;
 import com.google.cloud.aiplatform.v1.PredictResponse;
 import com.google.cloud.aiplatform.v1.PredictionServiceClient;
 import com.google.cloud.aiplatform.v1.PredictionServiceSettings;
-import com.google.cloud.storage.Blob;
-import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.gson.Gson;
@@ -20,10 +18,16 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 
 public class GeminiImageGenerator implements ImageGenerator {
+
+  private final BlobStorage blobStorage;
+
+  public GeminiImageGenerator(BlobStorage blobStorage) {
+    this.blobStorage = blobStorage;
+  }
+
 
   @Override
   public String generateImage(String haiku) {
@@ -36,10 +40,6 @@ public class GeminiImageGenerator implements ImageGenerator {
       final String endpoint = String.format("%s-aiplatform.googleapis.com:443", location);
       PredictionServiceSettings predictionServiceSettings =
         PredictionServiceSettings.newBuilder().setEndpoint(endpoint).build();
-
-      // --- Configuration: Set your bucket and desired object path ---
-      String bucketName = "akka-haiku";
-      String objectPathPrefix = "generated-images/"; // Example: "folder/subfolder/"
 
 // --- Initialize the GCS client once ---
 // This will use Application Default Credentials to authenticate.
@@ -79,24 +79,8 @@ public class GeminiImageGenerator implements ImageGenerator {
           if (fieldsMap.containsKey("bytesBase64Encoded")) {
             String bytesBase64Encoded = fieldsMap.get("bytesBase64Encoded").getStringValue();
             byte[] imageBytes = Base64.getDecoder().decode(bytesBase64Encoded);
-            String objectName = objectPathPrefix + "imagen-" + UUID.randomUUID() + ".png";
-            BlobId blobId = BlobId.of(bucketName, objectName);
 
-            // 3. Set metadata for the object (e.g., content type)
-            BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("image/png").build();
-
-            // 4. Upload the bytes to GCS
-            Blob blob = storage.create(blobInfo, imageBytes);
-
-            // --- GET THE PUBLIC URL ---
-            // The public URL for a GCS object follows a standard format.
-            String publicUrl = String.format("https://storage.googleapis.com/%s/%s",
-              blob.getBucket(), blob.getName());
-
-            System.out.format("Image uploaded to: gs://%s/%s\n", blob.getBucket(), blob.getName());
-            System.out.format("Public URL: %s\n", publicUrl);
-
-            return publicUrl;
+            return blobStorage.uploadPng(imageBytes, "generated-images", "image-");
           } else {
             throw new RuntimeException("No image data found in the prediction response.");
           }

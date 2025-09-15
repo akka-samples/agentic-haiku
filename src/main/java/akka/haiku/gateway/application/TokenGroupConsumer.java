@@ -18,13 +18,22 @@ public class TokenGroupConsumer extends Consumer {
 
   private static final Logger log = LoggerFactory.getLogger(TokenGroupConsumer.class);
   private final ComponentClient componentClient;
+  private final QrCodeGenerator qrCodeGenerator;
 
-  public TokenGroupConsumer(ComponentClient componentClient) {
+  public TokenGroupConsumer(ComponentClient componentClient, QrCodeGenerator qrCodeGenerator) {
     this.componentClient = componentClient;
+    this.qrCodeGenerator = qrCodeGenerator;
   }
 
   public Effect onChange(TokenGroup tokenGroup) {
-    if (tokenGroup.hasAvailableTokens()){
+    if (tokenGroup.isNewlyCreated()) {
+      log.info("New token group created {}, generating new qr code", tokenGroup.groupId());
+      var qrCodeUrl = qrCodeGenerator.generate(tokenGroup.groupId());
+      componentClient.forKeyValueEntity(tokenGroup.groupId())
+        .method(QrCodeEntity::create)
+        .invokeAsync(qrCodeUrl);
+      return effects().done();
+    } else if (tokenGroup.hasAvailableTokens()) {
       return effects().ignore();
     } else {
       String tokenGroupId = UUID.randomUUID().toString();
