@@ -16,7 +16,7 @@ public record ContentGeneration(String userInput,
   }
 
   public ContentGeneration withImageUrl(String imageUrl) {
-    return new ContentGeneration(userInput, Instant.now().toEpochMilli(), progress, haiku, Optional.of(new Image(imageUrl)));
+    return new ContentGeneration(userInput, generatedAt, progress, haiku, Optional.of(new Image(imageUrl)));
   }
 
   public ContentGeneration withUserInput(String userInput) {
@@ -25,6 +25,10 @@ public record ContentGeneration(String userInput,
 
   public ContentGeneration withHaiku(Haiku haiku) {
     return new ContentGeneration(userInput, generatedAt, progress, Optional.of(haiku), image);
+  }
+
+  public ContentGeneration withGeneratedTime() {
+    return new ContentGeneration(userInput, Instant.now().toEpochMilli(), progress, haiku, image);
   }
 
   public ContentGeneration addProgressLine(String line) {

@@ -15,14 +15,26 @@ import java.util.Optional;
 public class HaikuView extends View {
 
 
-  public record GeneratedContent(Long generateAt, String prompt, Optional<Haiku> haiku, Optional<Image> image){}
+  public record GeneratedContent(String id,
+                                 String prompt,
+                                 Long generatedAt,
+                                 Optional<Haiku> haiku,
+                                 Optional<Image> image){}
 
   @Consume.FromWorkflow(AgentTeamWorkflow.class)
   public static class ImagesUpdater extends TableUpdater<GeneratedContent> {
 
     public Effect<GeneratedContent> onChange(ContentGeneration contentGeneration) {
-      if (contentGeneration.image().isPresent()) {
-        var content = new GeneratedContent(contentGeneration.generatedAt(), contentGeneration.userInput(), contentGeneration.haiku(), contentGeneration.image());
+      if (contentGeneration.image().isPresent() || contentGeneration.haiku().isPresent()) {
+
+        var id = updateContext().eventSubject().get();
+        var content =
+          new GeneratedContent(id,
+            contentGeneration.userInput(),
+            contentGeneration.generatedAt(),
+            contentGeneration.haiku(),
+            contentGeneration.image());
+
         return effects().updateRow(content);
       } else {
         return effects().ignore();

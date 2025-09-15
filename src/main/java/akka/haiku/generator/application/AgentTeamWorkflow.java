@@ -135,7 +135,9 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
       .updateState(currentState()
         .addProgressLine("Haiku generated.")
         .addProgressLine("Generating Haiku image.")
-        .withHaiku(haiku))
+        .withHaiku(haiku)
+        .withGeneratedTime()
+      )
       .thenTransitionTo(AgentTeamWorkflow::generateImage)
       .withInput(haiku);
   }
@@ -156,17 +158,21 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
 
   private StepEffect generateCensoredImage() {
     return stepEffects()
-      .updateState(currentState()
+      .updateState(
+        currentState()
         .addProgressLine("Returning image for rejected message.")
-        .withImageUrl("static/img/censored.png"))
+          .withImageUrl("static/img/censored.png")
+          .withGeneratedTime())
       .thenEnd();
   }
 
   private StepEffect timeoutStep() {
     return stepEffects()
-      .updateState(currentState()
+      .updateState(
+        currentState()
         .addProgressLine("Cancelling image generation due to timeout.")
-        .withImageUrl("static/img/time-is-up.png"))
+          .withImageUrl("static/img/time-is-up.png")
+          .withGeneratedTime())
       .thenEnd();
   }
 

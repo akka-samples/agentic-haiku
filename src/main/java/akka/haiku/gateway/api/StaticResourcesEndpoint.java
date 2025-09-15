@@ -16,6 +16,12 @@ public class StaticResourcesEndpoint {
     return HttpResponses.staticResource("index.html");
   }
 
+
+  @Get("/form")
+  public HttpResponse form() {
+    return HttpResponses.staticResource("form.html");
+  }
+
   @Get("/static/**") 
   public HttpResponse staticResources(HttpRequest request) { 
     return HttpResponses.staticResource(request, "/static/"); 
