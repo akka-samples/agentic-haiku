@@ -54,7 +54,7 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
 
       return effects()
         .updateState(
-          ContentGeneration.empty().addProgressLine("Verifying message quality"))
+          ContentGeneration.empty().addProgressLine("Verifying message quality."))
         .transitionTo(AgentTeamWorkflow::checkForToxicContent)
         .withInput(UserInput.of(startGeneration.input))
         .thenReply(done());

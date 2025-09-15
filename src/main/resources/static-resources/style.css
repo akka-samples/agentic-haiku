@@ -12,7 +12,6 @@ body {
     min-height: 100vh;
     padding: 0;
     overflow-x: hidden;
-    background-image: url('https://akka.io/assets/images/akka-bg.svg');
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
@@ -78,10 +77,9 @@ body {
     flex: 1;
     padding: 12px;
     border: 1px solid #23272b;
-    border-radius: 6px;
     font-size: 15px;
     transition: border-color 0.2s;
-    background: #23272b;
+    background: #242424;
     color: #f5f6fa;
 }
 
@@ -92,19 +90,19 @@ body {
 
 .submit-btn {
     padding: 12px 28px;
-    background: #1a73e8;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
+    background: #00dbdd;
+    color: #000;
+    border: 2px solid #00dbdd;
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.2s, box-shadow 0.2s;
-    box-shadow: 0 1px 4px rgba(26,115,232,0.18);
 }
 
 .submit-btn:hover {
-    background: #1251a3;
+    background: #000000;
+    color: #00dbdd;
+    border: 2px solid #00dbdd;
 }
 
 .submit-btn:disabled {
@@ -480,6 +478,16 @@ body {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+.blinking-dots {
+    animation: blink 1s infinite;
+    display: inline-block;
 }
 
 @media (max-width: 1300px) {

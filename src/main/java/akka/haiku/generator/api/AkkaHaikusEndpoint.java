@@ -9,7 +9,6 @@ import akka.javasdk.annotations.http.HttpEndpoint;
 import akka.javasdk.annotations.http.Put;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.http.HttpResponses;
-import akka.pattern.RetrySettings;
 import akka.stream.Materializer;
 import akka.stream.javadsl.Source;
 import org.slf4j.Logger;
@@ -44,7 +43,23 @@ public record AkkaHaikusEndpoint(ComponentClient componentClient, Materializer m
   }
 
   @Get("/{haikuId}")
-  public HttpResponse getHaiku(String haikuId) {
+  public HaikuApiModel getHaiku(String haikuId) {
+
+    var state =
+      componentClient.forWorkflow(haikuId)
+        .method(AgentTeamWorkflow::getState)
+        .invoke();
+
+    return new HaikuApiModel(
+      haikuId,
+      state.userInput(),
+      state.generatedAt(),
+      state.haiku(),
+      state.image());
+  }
+
+  @Get("/{haikuId}/progress")
+  public HttpResponse getHaikuGenProgress(String haikuId) {
 
     var queueAndSrc =
       Source
@@ -77,7 +92,7 @@ public record AkkaHaikusEndpoint(ComponentClient componentClient, Materializer m
         publishedIndex.set(publishedCount + 1);
       }
 
-      // completed and we published all message?
+      // completed and we published all messages?
       if (state.isComplete() && publishedCount == size) {
         log.debug("closing queue");
         queue.complete();
