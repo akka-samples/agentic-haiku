@@ -16,8 +16,8 @@ public class StaticResourcesEndpoint {
     return HttpResponses.staticResource("index.html");
   }
 
-  @Get("/**")
-  public HttpResponse allResources(HttpRequest request) {
-    return HttpResponses.staticResource(request, "/");
+  @Get("/static/**") 
+  public HttpResponse staticResources(HttpRequest request) { 
+    return HttpResponses.staticResource(request, "/static/"); 
   }
 }

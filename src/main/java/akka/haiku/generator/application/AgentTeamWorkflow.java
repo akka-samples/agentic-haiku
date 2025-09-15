@@ -126,7 +126,7 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
 
   private StepEffect generateCensoredImage() {
     return stepEffects()
-      .updateState(currentState().withImageUrl("img/censored.png"))
+      .updateState(currentState().withImageUrl("static/img/censored.png"))
       .thenEnd();
   }
 
