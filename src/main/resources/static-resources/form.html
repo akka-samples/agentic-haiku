@@ -7,12 +7,15 @@
     <link rel="stylesheet" href="static/style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Akka haiku</h1>
-            <p>Submit text inputs to generate creative content</p>
+    <div class="container" style="display: flex; flex-direction: column; min-height: 100vh;">
+        <!-- Top Banner: Same as index.html -->
+        <div class="banner-header">
+            Akka haiku
         </div>
 
+        <div class="topline"></div>
+
+        <!-- Input Form Section -->
         <div class="input-section">
             <form class="input-form" id="inputForm">
                 <input 
@@ -21,17 +24,28 @@
                     id="textInput" 
                     placeholder="Enter your creative text input..." 
                     required
+                    maxlength="100"
+                    style="padding: 16px; font-size: 1.1rem;"
                 >
                 <button type="submit" class="submit-btn" id="submitBtn">
-                    Submit Input
+                    GENERATE HAIKU
                 </button>
             </form>
             <div class="status" id="status"></div>
         </div>
 
-        <div class="back-link">
-            <a href="index.html">← Back to Dashboard</a>
+        <!-- Haiku Generation Display -->
+        <div id="haikuGenerationDisplay" class="content-grid" style="padding: 20px; display: none;">
+            <div class="content-item">
+                <div class="haiku" id="haikuText" style="text-align: left;">
+                    <div class="haiku-line">Your haiku will appear here...</div>
+                </div>
+                <div class="image-container" id="imageContainer">
+                    <div class="no-content">Image will be generated after haiku completion</div>
+                </div>
+            </div>
         </div>
+
     </div>
 
     <script>
@@ -41,7 +55,13 @@
                 this.textInput = document.getElementById('textInput');
                 this.submitBtn = document.getElementById('submitBtn');
                 this.status = document.getElementById('status');
-                
+                this.inputSection = document.querySelector('.input-section');
+                this.haikuDisplay = document.getElementById('haikuGenerationDisplay');
+                this.haikuText = document.getElementById('haikuText');
+                this.imageContainer = document.getElementById('imageContainer');
+                this.haikuEventSource = null;
+                this.progressLines = [];
+
                 this.initializeForm();
             }
 
@@ -89,11 +109,18 @@
                     });
 
                     if (response.ok) {
+                        // Get the response data with haikuId
                         this.textInput.value = '';
                         this.showStatus('Input submitted successfully!', 'success');
-                        setTimeout(() => {
-                          window.location.href = '/';
-                        }, 1500);
+
+                        // Hide the input form section
+                        this.inputSection.style.display = 'none';
+
+                        // Display the haiku generation process
+                        this.displayHaikuGeneration(token);
+
+                        // Show the haiku generation section
+                        this.haikuDisplay.style.display = 'block';
                     } else {
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
@@ -102,15 +129,137 @@
                     this.showStatus(`Error submitting input: ${error.message}`, 'error');
                 } finally {
                     this.submitBtn.disabled = false;
-                    this.submitBtn.innerHTML = 'Submit Input';
+                    this.submitBtn.innerHTML = 'Generate Haiku';
                 }
+            }
+
+            displayHaikuGeneration(haikuId) {
+                // Close any existing SSE connection
+                if (this.haikuEventSource) {
+                    this.haikuEventSource.close();
+                }
+
+                // Connect to the haiku generation stream
+                this.haikuEventSource = new EventSource(`/haikus/${haikuId}/progress`);
+
+                // Initial state
+                this.haikuText.innerHTML = '<div class="haiku-line"><span class="loading"></span> Waiting for generation to start<span class="blinking-dots">...</span></div>';
+
+                // Create an array to store progress messages
+                this.progressLines = [];
+
+                // Handle incoming events
+                this.haikuEventSource.onmessage = (event) => {
+                    // Each event.data is a plain text string (not JSON)
+                    const progressText = event.data;
+
+                    // Add the line to our progress
+                    this.progressLines.push(progressText);
+
+                    // Update the display with all progress lines
+                    this.updateProgressDisplay();
+                };
+
+                // Handle errors or stream closing
+                this.haikuEventSource.onerror = (error) => {
+                    console.log('Haiku stream closed or error occurred:', error);
+                    this.haikuEventSource.close();
+
+                    // TODO: instead of doing that on error, send a close message from the server
+                    // When the stream closes, fetch the final haiku
+                    this.fetchFinalHaiku(haikuId);
+                };
+            }
+
+            async fetchFinalHaiku(haikuId) {
+                try {
+                    const response = await fetch(`/haikus/${haikuId}`);
+
+                    if (response.ok) {
+                        const haikuData = await response.json();
+                        this.displayFinalHaiku(haikuData);
+                    } else {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                } catch (error) {
+                    console.error('Error fetching final haiku:', error);
+                    // Keep the progress messages visible instead of showing an error
+                }
+            }
+
+            displayFinalHaiku(haikuData) {
+                // Clear progress lines to remove blinking dots
+                this.progressLines = [];
+
+                // Display the haiku if available
+                if (haikuData.haiku) {
+                    let haikuHtml = '<div class="haiku">';
+                    if (haikuData.haiku.line1) {
+                        haikuHtml += `<div class='haiku-line'>${this.escapeHtml(haikuData.haiku.line1)}</div>`;
+                    }
+                    if (haikuData.haiku.line2) {
+                        haikuHtml += `<div class='haiku-line'>${this.escapeHtml(haikuData.haiku.line2)}</div>`;
+                    }
+                    if (haikuData.haiku.line3) {
+                        haikuHtml += `<div class='haiku-line'>${this.escapeHtml(haikuData.haiku.line3)}</div>`;
+                    }
+                    haikuHtml += '</div>';
+                    this.haikuText.innerHTML = haikuHtml;
+                }
+
+                // Display the image if available
+                if (haikuData.image && haikuData.image.url) {
+                    this.imageContainer.innerHTML = `<img src='${this.escapeHtml(haikuData.image.url)}' alt='Generated image' class='generated-image' />`;
+                } else {
+                    this.imageContainer.innerHTML = '<div class="no-content">No image was generated</div>';
+                }
+            }
+
+            updateProgressDisplay() {
+                // Create HTML from the progress lines
+                let progressHtml = '';
+
+                for (let i = 0; i < this.progressLines.length; i++) {
+                    // Remove any surrounding quotes from the text
+                    let cleanText = this.progressLines[i];
+
+                    // Check if the text starts and ends with quotes
+                    if (cleanText.startsWith('"') && cleanText.endsWith('"')) {
+                        cleanText = cleanText.substring(1, cleanText.length - 1);
+                    }
+
+                    // Add the line with quotes removed
+                    // Add blinking dots only to the last line
+                    if (i === this.progressLines.length - 1) {
+                        progressHtml += `<div class='haiku-line' style='text-align: left;'>${this.escapeHtml(cleanText)}<span class="blinking-dots">...</span></div>`;
+                    } else {
+                        progressHtml += `<div class='haiku-line' style='text-align: left;'>${this.escapeHtml(cleanText)}</div>`;
+                    }
+                }
+
+                // Update the display
+                if (progressHtml) {
+                    this.haikuText.innerHTML = progressHtml;
+                } else {
+                    this.haikuText.innerHTML = '<div class="haiku-line" style="text-align: left;">Waiting for generation progress<span class="blinking-dots">...</span></div>';
+                }
+
+                // Auto-scroll to the bottom of the container to show latest progress
+                this.haikuText.scrollTop = this.haikuText.scrollHeight;
+            }
+
+            escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
             }
 
             showStatus(message, type) {
                 this.status.textContent = message;
                 this.status.className = `status ${type}`;
                 this.status.style.display = 'block';
-                
+
                 if (type === 'success') {
                     setTimeout(() => this.hideStatus(), 3000);
                 }
@@ -124,6 +273,14 @@
         // Initialize the form
         document.addEventListener('DOMContentLoaded', () => {
             new InputSubmitter();
+        });
+
+        // Clean up any open connections when leaving the page
+        window.addEventListener('beforeunload', () => {
+            const submitter = document.querySelector('#inputForm');
+            if (submitter && submitter.haikuEventSource) {
+                submitter.haikuEventSource.close();
+            }
         });
     </script>
 </body>
