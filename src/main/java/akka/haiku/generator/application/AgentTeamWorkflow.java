@@ -8,6 +8,7 @@ import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.workflow.Workflow;
 import akka.javasdk.workflow.WorkflowContext;
+import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,13 +22,16 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
   private final ComponentClient componentClient;
   private final String workflowId;
   private final ImageGenerator imageGenerator;
+  private final double failureRate;
 
   public AgentTeamWorkflow(WorkflowContext workflowContext,
                            ComponentClient componentClient,
-                           ImageGenerator imageGenerator) {
+                           ImageGenerator imageGenerator,
+                           Config config) {
     this.componentClient = componentClient;
-    this.workflowId =workflowContext.workflowId();
+    this.workflowId = workflowContext.workflowId();
     this.imageGenerator = imageGenerator;
+    this.failureRate = config.getDouble("haiku.app.force-failure-rate");
   }
 
   public record StartGeneration(String input) {
@@ -69,11 +73,14 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
     }
   }
 
-  private StepEffect checkForToxicContent(UserInput userInput) {
   private StepEffect checkMessageQuality(UserInput userInput) {
 
     log.debug("Workflow [{}]: checking message quality.",  workflowId);
+
+    if (Math.random() < failureRate) {
       log.error("Workflow [{}]: random failure occurred during message quality check.", workflowId);
+      throw new RuntimeException("Random failure during message quality check");
+    }
 
     var evaluated =
       componentClient
