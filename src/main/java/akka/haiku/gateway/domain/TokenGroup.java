@@ -42,8 +42,11 @@ public record TokenGroup(String groupId, List<Token> tokens) {
     return tokens.stream().filter(t -> t.status() == TokenStatus.AVAILABLE).count();
   }
 
-  public boolean hasAvailableTokens() {
-    return tokens.stream().anyMatch(t -> t.status() == TokenStatus.AVAILABLE);
+  public boolean isNearExhaustion() {
+    var totalAvailable = tokens.stream().filter(t -> t.status() == TokenStatus.AVAILABLE).toList().size();
+
+    if  (totalAvailable == 0) return true;
+    else return (double) totalAvailable / tokens.size() <= 0.15; // under 15% of the total
   }
 
   public boolean isNewlyCreated() {
