@@ -8,6 +8,7 @@ import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.workflow.Workflow;
 import akka.javasdk.workflow.WorkflowContext;
+import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,13 +22,16 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
   private final ComponentClient componentClient;
   private final String workflowId;
   private final ImageGenerator imageGenerator;
+  private final double failureRate;
 
   public AgentTeamWorkflow(WorkflowContext workflowContext,
                            ComponentClient componentClient,
-                           ImageGenerator imageGenerator) {
+                           ImageGenerator imageGenerator,
+                           Config config) {
     this.componentClient = componentClient;
-    this.workflowId =workflowContext.workflowId();
+    this.workflowId = workflowContext.workflowId();
     this.imageGenerator = imageGenerator;
+    this.failureRate = config.getDouble("haiku.app.force-failure-rate");
   }
 
   public record StartGeneration(String input) {
@@ -50,12 +54,12 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
       log.info("Already in progress, ignoring");
       return effects().reply(done());
     } else {
-      log.info("Starting image generation for input: {}", startGeneration);
+      log.info("Workflow [{}]: starting image generation for input: {}", workflowId, startGeneration);
 
       return effects()
         .updateState(
           ContentGeneration.empty().addProgressLine("Verifying message quality."))
-        .transitionTo(AgentTeamWorkflow::checkForToxicContent)
+        .transitionTo(AgentTeamWorkflow::checkMessageQuality)
         .withInput(UserInput.of(startGeneration.input))
         .thenReply(done());
     }
@@ -69,7 +73,14 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
     }
   }
 
-  private StepEffect checkForToxicContent(UserInput userInput) {
+  private StepEffect checkMessageQuality(UserInput userInput) {
+
+    log.debug("Workflow [{}]: checking message quality.",  workflowId);
+
+    if (Math.random() < failureRate) {
+      log.error("Workflow [{}]: random failure occurred during message quality check.", workflowId);
+      throw new RuntimeException("Random failure during message quality check");
+    }
 
     var evaluated =
       componentClient
@@ -79,7 +90,7 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
         .invoke(userInput);
 
     if (evaluated.isAccepted()) {
-      log.debug("Message is accepted.");
+      log.debug("Workflow [{}]: message is accepted.", workflowId);
       return stepEffects()
         .updateState(currentState()
           .addProgressLine("Message is accepted.")
@@ -88,7 +99,7 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
         .withInput(evaluated);
 
     } else {
-      log.debug("Message is rejected.");
+      log.debug("Workflow [{}]: message is rejected.",  workflowId);
       return stepEffects()
         .updateState(currentState()
           .addProgressLine("Message flagged as '" + evaluated.eval() + "'. Message is rejected."))
@@ -97,6 +108,9 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
   }
 
   private StepEffect analyseSentiment(UserInput userInput) {
+
+    log.debug("Workflow [{}]: analysing message sentiment.",  workflowId);
+
     var evaluated =
       componentClient
         .forAgent()
@@ -105,14 +119,14 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
         .invoke(userInput);
 
     if (evaluated.isNegative()) {
-      log.debug("Message is negative, discarding it.");
+      log.debug("Workflow [{}]: message is negative, discarding it.",  workflowId);
       return stepEffects()
         .updateState(currentState()
           .addProgressLine("Message flagged as '" + evaluated.eval() + "'. Message is rejected."))
         .thenTransitionTo(AgentTeamWorkflow::generateCensoredImage);
 
     } else {
-      log.debug("Message is positive or neutral, generating a Haiku...");
+      log.debug("Workflow [{}]: message is positive or neutral, generating a Haiku...", workflowId);
       return stepEffects()
         .updateState(currentState()
           .addProgressLine("Message flagged as '" + evaluated.eval() + "', generating a Haiku.")
@@ -124,6 +138,7 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
 
   private StepEffect generateHaiku(UserInput userInput) {
 
+    log.debug("Workflow [{}]: generating Haiku from message.",  workflowId);
     var haiku =
       componentClient.
         forAgent()
@@ -144,8 +159,8 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
 
   private StepEffect generateImage(Haiku haiku) {
 
+    log.debug("Workflow [{}]: generating image for Haiku.",  workflowId);
     var url = imageGenerator.generateImage(haiku.formatted());
-
     log.info("Image generated: {}", url);
 
     return stepEffects()
@@ -157,6 +172,8 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
   }
 
   private StepEffect generateCensoredImage() {
+
+    log.debug("Workflow [{}]: finalizing with censored image.",  workflowId);
     return stepEffects()
       .updateState(
         currentState()
@@ -167,6 +184,7 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
   }
 
   private StepEffect timeoutStep() {
+    log.debug("Workflow [{}]: finalizing with timeout image.",  workflowId);
     return stepEffects()
       .updateState(
         currentState()

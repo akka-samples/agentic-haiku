@@ -16,18 +16,19 @@ import java.util.UUID;
 @Setup
 public class Bootstrap implements ServiceSetup {
 
-  public static final int TOKEN_GROUP_SIZE = 2;
   private final ComponentClient componentClient;
+  private final int tokenGroupSize;
 
   public Bootstrap(Config config, ComponentClient componentClient) {
     this.componentClient = componentClient;
+    this.tokenGroupSize = config.getInt("haiku.app.token-group-size");
   }
 
   @Override
   public void onStartup() {
     componentClient.forKeyValueEntity(UUID.randomUUID().toString())
       .method(TokenGroupEntity::create)
-      .invokeAsync(TOKEN_GROUP_SIZE);
+      .invokeAsync(tokenGroupSize);
   }
 
   @Override
