@@ -29,7 +29,8 @@ public class TokenGroupConsumer extends Consumer {
   public Effect onChange(TokenGroup tokenGroup) {
 
     if (tokenGroup.isNewlyCreated()) {
-      log.debug("New token group created {}, generating new qr code", tokenGroup.groupId());
+      log.info("New token group created {}, generating new qr code", tokenGroup.groupId());
+      log.info("Go to form url: {}", "http://localhost:9000/gateway/" + tokenGroup.groupId());
       var qrCodeUrl = qrCodeGenerator.generate(tokenGroup.groupId());
       componentClient.forKeyValueEntity(tokenGroup.groupId())
         .method(QrCodeEntity::create)

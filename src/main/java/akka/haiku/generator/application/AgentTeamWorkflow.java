@@ -99,10 +99,10 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
         .withInput(evaluated);
 
     } else {
-      log.debug("Workflow [{}]: message is rejected.",  workflowId);
+      log.debug("Workflow [{}]: message is rejected. Flagged as {}",  workflowId, evaluated.eval());
       return stepEffects()
         .updateState(currentState()
-          .addProgressLine("Message flagged as '" + evaluated.eval() + "'. Message is rejected."))
+          .addProgressLine("Message is rejected. Please be more creative and remember to be polite and respectful."))
         .thenTransitionTo(AgentTeamWorkflow::generateCensoredImage);
     }
   }
@@ -122,7 +122,7 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
       log.debug("Workflow [{}]: message is negative, discarding it.",  workflowId);
       return stepEffects()
         .updateState(currentState()
-          .addProgressLine("Message flagged as '" + evaluated.eval() + "'. Message is rejected."))
+          .addProgressLine("Message is rejected, because it is too negative. Please be more positive and remember to be polite and respectful."))
         .thenTransitionTo(AgentTeamWorkflow::generateCensoredImage);
 
     } else {
