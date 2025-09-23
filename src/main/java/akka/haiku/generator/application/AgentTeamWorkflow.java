@@ -159,8 +159,8 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
 
   private StepEffect generateImage(Haiku haiku) {
 
-    log.debug("Workflow [{}]: generating image for Haiku.",  workflowId);
-    var url = imageGenerator.generateImage(haiku.formatted());
+    log.debug("Workflow [{}]: generating image for Haiku.", workflowId);
+    var url = imageGenerator.generateImage(currentState().userInput(), haiku.formatted());
     log.info("Image generated: {}", url);
 
     return stepEffects()

@@ -6,7 +6,7 @@ import akka.haiku.generator.application.ImageGenerator;
 public class FixedImageGenerator implements ImageGenerator {
 
   @Override
-  public String generateImage(String haiku) {
+  public String generateImage(String userInput, String haiku) {
     try {
       Thread.sleep(10000);
     } catch (InterruptedException e) {
