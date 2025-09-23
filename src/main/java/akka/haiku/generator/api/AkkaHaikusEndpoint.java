@@ -1,6 +1,7 @@
 package akka.haiku.generator.api;
 
 import akka.haiku.generator.application.AgentTeamWorkflow;
+import akka.haiku.generator.application.GenerationProgressView;
 import akka.haiku.generator.application.HaikuView;
 import akka.http.javadsl.model.HttpResponse;
 import akka.javasdk.annotations.Acl;
@@ -76,11 +77,11 @@ public record AkkaHaikusEndpoint(ComponentClient componentClient, Materializer m
       log.debug("polling haiku gen state: {}", haikuId);
 
       var state =
-        componentClient.forWorkflow(haikuId)
-          .method(AgentTeamWorkflow::getState)
-          .invoke();
+        componentClient.forView()
+          .method(GenerationProgressView::get)
+          .invoke(haikuId);
 
-      var progressMessages = state.progress();
+      var progressMessages = state.lines();
       var size = progressMessages.size();
 
       int publishedCount = publishedIndex.get();
@@ -93,7 +94,7 @@ public record AkkaHaikusEndpoint(ComponentClient componentClient, Materializer m
       }
 
       // completed and we published all messages?
-      if (state.isComplete() && publishedCount == size) {
+      if (state.completed() && publishedCount == size) {
         log.debug("closing queue");
         queue.complete();
       }
@@ -105,11 +106,6 @@ public record AkkaHaikusEndpoint(ComponentClient componentClient, Materializer m
     return HttpResponses.serverSentEvents(src);
   }
 
-
-  /**
-   *
-   * Return
-   */
   @Get
   public HttpResponse realTimeContent() {
     var contentUpdates = componentClient.forView()
