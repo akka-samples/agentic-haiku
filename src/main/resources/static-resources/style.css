@@ -242,7 +242,7 @@ body {
     background: #23272b;
     border-radius: 8px;
     padding: 18px;
-    border-left: 4px solid #ffce4a;
+    border-left: 0px solid #ffce4a;
     transition: box-shadow 0.2s;
     box-shadow: 0 1px 4px rgba(0,0,0,0.18);
 }

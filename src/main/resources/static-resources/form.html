@@ -24,7 +24,6 @@
                     id="textInput" 
                     placeholder="Enter your creative text input..." 
                     required
-                    maxlength="100"
                     style="padding: 16px; font-size: 1.1rem;"
                 >
                 <button type="submit" class="submit-btn" id="submitBtn">
@@ -100,6 +99,7 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'akka-debug-id': '123'
                         },
                         body: JSON.stringify({ 
                             tokenGroupId: tokenGroupId,

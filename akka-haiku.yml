@@ -1,0 +1,21 @@
+name: akka-haiku
+service:
+  volumeMounts:
+  - mountPath: /google-application-credentials-path
+    secret:
+      secretName: google-application-credentials
+  telemetry:
+    tracing:
+      enabled: true
+  env:
+  - name: GOOGLE_AI_GEMINI_API_KEY
+    valueFrom:
+      secretKeyRef:
+        key: api-key
+        name: google-gemini
+  - name: GOOGLE_APPLICATION_CREDENTIALS
+    value: /google-application-credentials-path/credentials.json
+  image: docker.io/aludwiko/akka-haiku:1.0-SNAPSHOT-20250922122714
+  resources:
+    runtime:
+      mode: embedded
