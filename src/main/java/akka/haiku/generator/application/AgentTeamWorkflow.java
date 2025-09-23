@@ -38,7 +38,6 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
   }
 
 
-
   @Override
   public WorkflowSettings settings() {
     return WorkflowSettings.builder()
@@ -57,8 +56,7 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
       log.info("Workflow [{}]: starting image generation for input: {}", workflowId, startGeneration);
 
       return effects()
-        .updateState(
-          ContentGeneration.empty().addProgressLine("Verifying message quality."))
+        .updateState(ContentGeneration.empty())
         .transitionTo(AgentTeamWorkflow::checkMessageQuality)
         .withInput(UserInput.of(startGeneration.input))
         .thenReply(done());
@@ -75,7 +73,7 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
 
   private StepEffect checkMessageQuality(UserInput userInput) {
 
-    log.debug("Workflow [{}]: checking message quality.",  workflowId);
+    log.debug("Workflow [{}]: checking message quality.", workflowId);
 
     if (Math.random() < failureRate) {
       log.error("Workflow [{}]: random failure occurred during message quality check.", workflowId);
@@ -92,24 +90,21 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
     if (evaluated.isAccepted()) {
       log.debug("Workflow [{}]: message is accepted.", workflowId);
       return stepEffects()
-        .updateState(currentState()
-          .addProgressLine("Message is accepted.")
-          .addProgressLine("Analysing message sentiment."))
+        .updateState(currentState().accepted())
         .thenTransitionTo(AgentTeamWorkflow::analyseSentiment)
         .withInput(evaluated);
 
     } else {
-      log.debug("Workflow [{}]: message is rejected. Flagged as {}",  workflowId, evaluated.eval());
+      log.debug("Workflow [{}]: message is rejected. Flagged as {}", workflowId, evaluated.eval());
       return stepEffects()
-        .updateState(currentState()
-          .addProgressLine("Message is rejected. Please be more creative and remember to be polite and respectful."))
-        .thenTransitionTo(AgentTeamWorkflow::generateCensoredImage);
+        .updateState(currentState().toxicityDetected())
+        .thenEnd();
     }
   }
 
   private StepEffect analyseSentiment(UserInput userInput) {
 
-    log.debug("Workflow [{}]: analysing message sentiment.",  workflowId);
+    log.debug("Workflow [{}]: analysing message sentiment.", workflowId);
 
     var evaluated =
       componentClient
@@ -119,18 +114,15 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
         .invoke(userInput);
 
     if (evaluated.isNegative()) {
-      log.debug("Workflow [{}]: message is negative, discarding it.",  workflowId);
+      log.debug("Workflow [{}]: message is negative, discarding it.", workflowId);
       return stepEffects()
-        .updateState(currentState()
-          .addProgressLine("Message is rejected, because it is too negative. Please be more positive and remember to be polite and respectful."))
-        .thenTransitionTo(AgentTeamWorkflow::generateCensoredImage);
+        .updateState(currentState().negativityDetected())
+        .thenEnd();
 
     } else {
       log.debug("Workflow [{}]: message is positive or neutral, generating a Haiku...", workflowId);
       return stepEffects()
-        .updateState(currentState()
-          .addProgressLine("Message flagged as '" + evaluated.eval() + "', generating a Haiku.")
-          .withUserInput(userInput.originalInput()))
+        .updateState(currentState().validated().withUserInput(userInput.originalInput()))
         .thenTransitionTo(AgentTeamWorkflow::generateHaiku)
         .withInput(evaluated);
     }
@@ -138,7 +130,7 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
 
   private StepEffect generateHaiku(UserInput userInput) {
 
-    log.debug("Workflow [{}]: generating Haiku from message.",  workflowId);
+    log.debug("Workflow [{}]: generating Haiku from message.", workflowId);
     var haiku =
       componentClient.
         forAgent()
@@ -147,12 +139,7 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
         .invoke(userInput.originalInput());
 
     return stepEffects()
-      .updateState(currentState()
-        .addProgressLine("Haiku generated.")
-        .addProgressLine("Generating Haiku image.")
-        .withHaiku(haiku)
-        .withGeneratedTime()
-      )
+      .updateState(currentState().withHaiku(haiku))
       .thenTransitionTo(AgentTeamWorkflow::generateImage)
       .withInput(haiku);
   }
@@ -164,33 +151,14 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
     log.info("Image generated: {}", url);
 
     return stepEffects()
-      .updateState(
-        currentState()
-          .addProgressLine("Haiku image generated.")
-          .withImageUrl(url))
-      .thenEnd();
-  }
-
-  private StepEffect generateCensoredImage() {
-
-    log.debug("Workflow [{}]: finalizing with censored image.",  workflowId);
-    return stepEffects()
-      .updateState(
-        currentState()
-        .addProgressLine("Returning image for rejected message.")
-          .withImageUrl("static/img/censored.png")
-          .withGeneratedTime())
+      .updateState(currentState().withImageUrl(url))
       .thenEnd();
   }
 
   private StepEffect timeoutStep() {
-    log.debug("Workflow [{}]: finalizing with timeout image.",  workflowId);
+    log.debug("Workflow [{}]: finalizing with timeout image.", workflowId);
     return stepEffects()
-      .updateState(
-        currentState()
-        .addProgressLine("Cancelling image generation due to timeout.")
-          .withImageUrl("static/img/time-is-up.png")
-          .withGeneratedTime())
+      .updateState(currentState().timedOut())
       .thenEnd();
   }
 
