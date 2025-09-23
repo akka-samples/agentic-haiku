@@ -25,7 +25,7 @@ public class HaikuView extends View {
   public static class ImagesUpdater extends TableUpdater<GeneratedContent> {
 
     public Effect<GeneratedContent> onChange(ContentGeneration contentGeneration) {
-      if (contentGeneration.image().isPresent() || contentGeneration.haiku().isPresent()) {
+      if (contentGeneration.image().isPresent() && contentGeneration.successfullyGenerated()) {
 
         var id = updateContext().eventSubject().get();
         var content =
