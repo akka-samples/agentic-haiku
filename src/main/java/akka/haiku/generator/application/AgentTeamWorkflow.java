@@ -80,12 +80,11 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
       throw new RuntimeException("Random failure during message quality check");
     }
 
-    var evaluated =
-      componentClient
-        .forAgent()
-        .inSession(this.workflowId)
-        .method(ToxicityDetectorAgent::evaluateContent)
-        .invoke(userInput);
+    var evaluated = componentClient
+      .forAgent()
+      .inSession(this.workflowId)
+      .method(ToxicityDetectorAgent::evaluateContent)
+      .invoke(userInput);
 
     if (evaluated.isAccepted()) {
       log.debug("Workflow [{}]: message is accepted.", workflowId);
@@ -106,12 +105,11 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
 
     log.debug("Workflow [{}]: analysing message sentiment.", workflowId);
 
-    var evaluated =
-      componentClient
-        .forAgent()
-        .inSession(this.workflowId)
-        .method(SentimentDetectorAgent::analyseSentiment)
-        .invoke(userInput);
+    var evaluated = componentClient
+      .forAgent()
+      .inSession(this.workflowId)
+      .method(SentimentDetectorAgent::analyseSentiment)
+      .invoke(userInput);
 
     if (evaluated.isNegative()) {
       log.debug("Workflow [{}]: message is negative, discarding it.", workflowId);
@@ -131,12 +129,11 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
   private StepEffect generateHaiku(UserInput userInput) {
 
     log.debug("Workflow [{}]: generating Haiku from message.", workflowId);
-    var haiku =
-      componentClient.
-        forAgent()
-        .inSession(this.workflowId)
-        .method(HaikuGenAgent::generate)
-        .invoke(userInput.originalInput());
+    var haiku = componentClient
+      .forAgent()
+      .inSession(this.workflowId)
+      .method(HaikuGenAgent::generate)
+      .invoke(userInput.originalInput());
 
     return stepEffects()
       .updateState(currentState().withHaiku(haiku))

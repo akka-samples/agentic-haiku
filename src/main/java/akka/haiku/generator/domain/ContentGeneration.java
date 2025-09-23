@@ -57,4 +57,8 @@ public record ContentGeneration(String userInput,
   public ContentGeneration timedOut() {
     return new ContentGeneration(userInput, Instant.now().toEpochMilli(), TIMED_OUT, haiku, Optional.of(new Image("static/img/time-is-up.png")));
   }
+
+  public boolean successfullyGenerated() {
+    return status != TOXICITY_DETECTED && status != NEGATIVITY_DETECTED && status != TIMED_OUT;
+  }
 }
