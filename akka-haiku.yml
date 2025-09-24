@@ -15,7 +15,9 @@ service:
         name: google-gemini
   - name: GOOGLE_APPLICATION_CREDENTIALS
     value: /google-application-credentials-path/credentials.json
-  image: docker.io/aludwiko/akka-haiku:1.0-SNAPSHOT-20250922122714
+  - name: HAIKU_APP_URL
+    value: https://lively-credit-2188.gcp-us-east1.apps.akka.st
+  image: docker.io/aludwiko/akka-haiku:1.0-SNAPSHOT-20250924075029
   resources:
     runtime:
       mode: embedded

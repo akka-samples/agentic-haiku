@@ -34,9 +34,15 @@ public class GenerationProgressView extends View {
 
     public Effect<Progress> onChange(ContentGeneration contentGeneration) {
       if (rowState() == null) {
+        if (contentGeneration.status() == null) { //backward compatibility, remove when deploying final version
+          return effects().ignore();
+        }
         var id = updateContext().eventSubject().get();
         return effects().updateRow(new Progress(id, false, toProgressLines(contentGeneration.status())));
       } else {
+        if (contentGeneration.status() == null) { //backward compatibility, remove when deploying final version
+          return effects().ignore();
+        }
         return effects().updateRow(rowState()
           .addLines(toProgressLines(contentGeneration.status()))
           .setCompleted(contentGeneration.isComplete()));
