@@ -60,7 +60,7 @@ public class GenerationProgressView extends View {
         List.of("Message is rejected, because it is too negative. Please be more positive and remember to be polite and respectful.");
       case VALIDATED -> List.of("Message successfully validated, generating a Haiku.");
       case HAIKU_GENERATED -> List.of("Haiku generated.", "Generating Haiku image.");
-      case IMAGE_GENERATED -> List.of("Haiku image generated.");
+      case IMAGE_GENERATED -> List.of("Haiku image generated.", "Come and collect your Akka t-shirt!");
       case TIMED_OUT -> List.of("Cancelling generation due to timeout.");
     };
   }
