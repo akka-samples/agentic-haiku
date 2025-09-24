@@ -39,7 +39,7 @@ body {
 }
 
 .left-half {
-    width: 50vw;
+    width: 42vw;
     height: 100vh;
     display: flex;
     flex-direction: column;
@@ -48,7 +48,7 @@ body {
 }
 
 .right-half {
-    width: 50vw;
+    width: 58vw;
     height: 100vh;
     display: flex;
     flex-direction: column;
@@ -635,6 +635,7 @@ body {
 }
 
 @media (max-width: 768px) {
+    /* Index.html mobile layout */
     .split-layout {
         flex-direction: column;
     }
@@ -652,5 +653,141 @@ body {
     .qr-image {
         width: 150px;
         height: 150px;
+    }
+}
+
+/* Mobile-specific styles for form.html and scan-qr-code.html */
+@media screen and (max-width: 768px) {
+    /* Target form and scan-qr pages by detecting absence of has-split-layout class */
+    .container:not(.has-split-layout) {
+        padding: 20px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+
+    /* Form page mobile styles - apply to pages without split layout */
+    .container:not(.has-split-layout) .input-section {
+        margin: 20px 0;
+        padding: 20px;
+        border-radius: 12px;
+        flex-shrink: 0;
+    }
+
+    .container:not(.has-split-layout) .input-form {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .container:not(.has-split-layout) .input-field {
+        width: 100%;
+        padding: 16px !important;
+        font-size: 1.1rem !important;
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+
+    .container:not(.has-split-layout) .submit-btn {
+        width: 100%;
+        padding: 16px;
+        font-size: 1.1rem;
+        border-radius: 8px;
+        margin-top: 10px;
+    }
+
+    /* Haiku display mobile optimization for form pages */
+    .container:not(.has-split-layout) .content-grid {
+        padding: 10px !important;
+        display: block !important;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .container:not(.has-split-layout) .content-item {
+        margin: 0;
+        padding: 20px;
+        border-radius: 12px;
+        max-width: none;
+    }
+
+    .container:not(.has-split-layout) .haiku {
+        margin-bottom: 15px;
+        padding: 16px;
+        text-align: center;
+    }
+
+    .container:not(.has-split-layout) .haiku-line {
+        font-size: 1.3rem !important;
+        line-height: 1.4;
+        margin-bottom: 6px;
+    }
+
+    .container:not(.has-split-layout) .image-container {
+        margin: 15px 0;
+        text-align: center;
+    }
+
+    .container:not(.has-split-layout) .generated-image {
+        max-width: 90% !important;
+        border-radius: 8px;
+        height: auto;
+    }
+
+    /* Scan QR code page mobile styles */
+    .container:not(.has-split-layout) .header {
+        text-align: center;
+        padding: 40px 20px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .container:not(.has-split-layout) .header h1 {
+        font-size: 2.5rem !important;
+        margin-bottom: 20px;
+        color: #fff;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .container:not(.has-split-layout) .header p {
+        font-size: 1.2rem !important;
+        line-height: 1.5;
+        color: #bfc4ca;
+        text-align: center;
+        max-width: 90%;
+    }
+
+    /* Mobile-specific banner header for form pages */
+    .container:not(.has-split-layout) .banner-header {
+        font-size: 2.5rem !important;
+        text-align: center;
+        margin: 20px 0;
+        padding: 0 20px;
+        line-height: 1.2;
+    }
+
+    /* Status messages mobile optimization */
+    .container:not(.has-split-layout) .status {
+        margin: 15px 0;
+        padding: 15px;
+        border-radius: 8px;
+        font-size: 1rem;
+        text-align: center;
+    }
+
+    /* Topline mobile adjustment */
+    .container:not(.has-split-layout) .topline {
+        margin: 20px 0;
+        flex-shrink: 0;
+    }
+
+    /* Ensure touch targets are appropriate size */
+    .container:not(.has-split-layout) button,
+    .container:not(.has-split-layout) input {
+        min-height: 44px;
     }
 }
