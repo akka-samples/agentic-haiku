@@ -5,7 +5,9 @@ import akka.haiku.gateway.application.TokenGroupEntity;
 import akka.haiku.generator.application.ImageGenerator;
 import akka.haiku.generator.infrastructure.FixedImageGenerator;
 import akka.haiku.generator.infrastructure.GeminiImageGenerator;
+import akka.haiku.storage.application.BlobStorage;
 import akka.haiku.storage.infrastructure.GCPBlobStorage;
+import akka.haiku.storage.infrastructure.LocalStorage;
 import akka.javasdk.DependencyProvider;
 import akka.javasdk.ServiceSetup;
 import akka.javasdk.annotations.Setup;
@@ -36,21 +38,15 @@ public class Bootstrap implements ServiceSetup {
 
   @Override
   public DependencyProvider createDependencyProvider() {
-    var blobStorage = new GCPBlobStorage();
-    var imageGenerator = new GeminiImageGenerator(blobStorage);
-    var fixedGenerator = new FixedImageGenerator();
+    var blobStorage = createBlobStorage();
+    var imageGenerator = createImageGenerator(blobStorage);
     var qrCodeGenerator = new QrCodeGenerator(blobStorage, config);
 
     return new DependencyProvider() { // <3>
       @Override
       public <T> T getDependency(Class<T> clazz) {
         if (clazz == ImageGenerator.class) {
-          var googleApplicationCredentials = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
-          if (googleApplicationCredentials == null || googleApplicationCredentials.isEmpty()) {
-            return (T) fixedGenerator;
-          } else {
-            return (T) imageGenerator;
-          }
+          return (T) imageGenerator;
         } else if (clazz == QrCodeGenerator.class) {
           return (T) qrCodeGenerator;
         } else {
@@ -58,5 +54,23 @@ public class Bootstrap implements ServiceSetup {
         }
       }
     };
+  }
+
+  private BlobStorage createBlobStorage() {
+    var googleApplicationCredentials = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
+    if (googleApplicationCredentials == null || googleApplicationCredentials.isEmpty()) {
+      return new LocalStorage();
+    } else {
+      return new GCPBlobStorage();
+    }
+  }
+
+  private ImageGenerator createImageGenerator(BlobStorage blobStorage) {
+    var googleApplicationCredentials = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
+    if (googleApplicationCredentials == null || googleApplicationCredentials.isEmpty()) {
+      return new FixedImageGenerator();
+    } else {
+      return new GeminiImageGenerator(blobStorage);
+    }
   }
 }
