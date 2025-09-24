@@ -8,6 +8,7 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
+import com.typesafe.config.Config;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -19,13 +20,15 @@ import static java.util.Optional.ofNullable;
 public class QrCodeGenerator {
 
   private final BlobStorage blobStorage;
+  private final Config config;
 
-  public QrCodeGenerator(BlobStorage blobStorage) {
+  public QrCodeGenerator(BlobStorage blobStorage, Config config) {
     this.blobStorage = blobStorage;
+    this.config = config;
   }
 
   public String generate(String tokenGroupId) {
-    var urlForQrCode = ofNullable(System.getenv("APP_URL"))
+    var urlForQrCode = ofNullable(config.getString("haiku.app.url"))
       .map(url -> url + "/gateway/" + tokenGroupId)
       .orElse("http://localhost:9000/gateway/" + tokenGroupId);
     var qrCodeImage = generateQRCodeImage(urlForQrCode, 300);

@@ -18,9 +18,11 @@ public class Bootstrap implements ServiceSetup {
 
   private final ComponentClient componentClient;
   private final int tokenGroupSize;
+  private final Config config;
 
   public Bootstrap(Config config, ComponentClient componentClient) {
     this.componentClient = componentClient;
+    this.config = config;
     this.tokenGroupSize = config.getInt("haiku.app.token-group-size");
   }
 
@@ -35,7 +37,7 @@ public class Bootstrap implements ServiceSetup {
   public DependencyProvider createDependencyProvider() {
     var blobStorage = new GCPBlobStorage();
     var imageGenerator = new GeminiImageGenerator(blobStorage);
-    var qrCodeGenerator = new QrCodeGenerator(blobStorage);
+    var qrCodeGenerator = new QrCodeGenerator(blobStorage, config);
 
     return new DependencyProvider() { // <3>
       @Override
