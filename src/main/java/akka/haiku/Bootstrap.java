@@ -3,6 +3,7 @@ package akka.haiku;
 import akka.haiku.gateway.application.QrCodeGenerator;
 import akka.haiku.gateway.application.TokenGroupEntity;
 import akka.haiku.generator.application.ImageGenerator;
+import akka.haiku.generator.infrastructure.FixedImageGenerator;
 import akka.haiku.generator.infrastructure.GeminiImageGenerator;
 import akka.haiku.storage.infrastructure.GCPBlobStorage;
 import akka.javasdk.DependencyProvider;
@@ -37,13 +38,19 @@ public class Bootstrap implements ServiceSetup {
   public DependencyProvider createDependencyProvider() {
     var blobStorage = new GCPBlobStorage();
     var imageGenerator = new GeminiImageGenerator(blobStorage);
+    var fixedGenerator = new FixedImageGenerator();
     var qrCodeGenerator = new QrCodeGenerator(blobStorage, config);
 
     return new DependencyProvider() { // <3>
       @Override
       public <T> T getDependency(Class<T> clazz) {
         if (clazz == ImageGenerator.class) {
-          return (T) imageGenerator;
+          var googleApplicationCredentials = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
+          if (googleApplicationCredentials == null || googleApplicationCredentials.isEmpty()) {
+            return (T) fixedGenerator;
+          } else {
+            return (T) imageGenerator;
+          }
         } else if (clazz == QrCodeGenerator.class) {
           return (T) qrCodeGenerator;
         } else {

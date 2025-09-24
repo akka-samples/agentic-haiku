@@ -8,7 +8,7 @@ public class FixedImageGenerator implements ImageGenerator {
   @Override
   public String generateImage(String userInput, String haiku) {
     try {
-      Thread.sleep(10000);
+      Thread.sleep(2000);
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
