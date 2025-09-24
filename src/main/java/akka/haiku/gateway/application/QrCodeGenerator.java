@@ -31,7 +31,7 @@ public class QrCodeGenerator {
     var urlForQrCode = ofNullable(config.getString("haiku.app.url"))
       .map(url -> url + "/gateway/" + tokenGroupId)
       .orElse("http://localhost:9000/gateway/" + tokenGroupId);
-    var qrCodeImage = generateQRCodeImage(urlForQrCode, 500);
+    var qrCodeImage = generateQRCodeImage(urlForQrCode, 300);
     return blobStorage.uploadPng(qrCodeImage, "qrcodes", "qrcode-");
   }
 
