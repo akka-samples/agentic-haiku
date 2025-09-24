@@ -2,35 +2,53 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=1920, height=1080, initial-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Akka Haiku</title>
     <link rel="stylesheet" href="static/style.css">
 </head>
 <body>
     <div class="container">
-        <!-- Top Banner: Title/Message and QR Code Side by Side -->
-        <div class="top-banner">
-            <div class="banner-left">
-                <div class="banner-header">Akka haiku</div>
-                <div class="highlight-message">
-                    What's on <span style="color: #ffce4a;">your mind</span>?
-                    <br/><span style="color: #ffce4a;">Scan here</span> to transform your <span
-                        style="color: #ffce4a;">thoughts</span> into a <br/>
-                    one-of-a-kind <span style="color: #72d35b;">Haiku</span> and image, <br/>
-                    and walk away with a free <span style="color: #72d35b;">Akka t-shirt!</span>
+        <div class="split-layout">
+            <!-- Left Half: Haiku Carousel -->
+            <div class="left-half">
+                <div class="banner-content">
+                    <div class="banner-left">
+                        <div class="banner-header">Akka haiku</div>
+                        <div class="highlight-message">
+                            What's on <span style="color: #ffce4a;">your mind</span>?
+                            <br/><span style="color: #ffce4a;">Scan here</span> to transform your <span
+                                style="color: #ffce4a;">thoughts</span> into a <br/>
+                            one-of-a-kind <span style="color: #72d35b;">Haiku</span> and image, <br/>
+                            and walk away with a free <span style="color: #72d35b;">Akka t-shirt!</span>
+                        </div>
+                    </div>
+                    <div class="qr-pane">
+                        <div class="qr-container" id="qrContainer">
+                            <div class="no-qr">
+                                <span class="loading"></span> Loading QR code...
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="qr-pane">
-                <div class="qr-container" id="qrContainer">
-                    <div class="no-qr">
-                        <span class="loading"></span> Loading QR code...
+
+            <!-- Right Half: Banner Content -->
+            <div class="right-half">
+                <div class="carousel-container">
+                    <div class="carousel-wrapper">
+                        <div id="haikuStreamGrid" class="carousel-content"></div>
+                    </div>
+                    <div class="carousel-navigation">
+                        <button class="carousel-btn prev-btn" id="prevBtn">‹</button>
+                        <div class="carousel-indicators" id="carouselIndicators"></div>
+                        <button class="carousel-btn next-btn" id="nextBtn">›</button>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="topline"></div>
-        <!-- Haiku Tiles Grid -->
-        <div id="haikuStreamGrid" class="content-grid"></div>
     </div>
     <script>
         class QrCodeManager {
@@ -102,6 +120,10 @@
                 this.haikuGrid = document.getElementById('haikuStreamGrid');
                 this.haikuMap = new Map(); // key: id, value: haikuObj
                 this.eventSource = null;
+                this.currentIndex = 0;
+                this.autoPlayInterval = null;
+                this.autoPlayDelay = 5000; // 5 seconds
+                this.initializeCarousel();
                 this.connect();
             }
             connect() {
@@ -130,6 +152,22 @@
                     // Optionally show error status
                 }
             }
+            initializeCarousel() {
+                this.prevBtn = document.getElementById('prevBtn');
+                this.nextBtn = document.getElementById('nextBtn');
+                this.indicators = document.getElementById('carouselIndicators');
+
+                this.prevBtn.addEventListener('click', () => this.previousSlide());
+                this.nextBtn.addEventListener('click', () => this.nextSlide());
+
+                // Auto-play functionality
+                this.startAutoPlay();
+
+                // Pause auto-play on hover
+                const carouselContainer = document.querySelector('.carousel-container');
+                carouselContainer.addEventListener('mouseenter', () => this.stopAutoPlay());
+                carouselContainer.addEventListener('mouseleave', () => this.startAutoPlay());
+            }
             getKey(haikuObj) {
                 // Use unique id as key
                 return haikuObj.id;
@@ -138,7 +176,13 @@
                 const key = this.getKey(haikuObj);
                 // Only add/update if haiku or image is present
                 if (haikuObj.haiku || haikuObj.image) {
+                    const isNewHaiku = !this.haikuMap.has(key);
                     this.haikuMap.set(key, haikuObj);
+
+                    // Reset to beginning when new content arrives
+                    if (isNewHaiku) {
+                        this.currentIndex = 0;
+                    }
                 }
                 this.render();
             }
@@ -157,6 +201,8 @@
                     })
                 if (haikus.length === 0) {
                     this.haikuGrid.innerHTML = '<div class="no-content">No haikus generated yet.</div>';
+                    this.updateIndicators(0);
+                    this.updateNavigationButtons(0);
                     return;
                 }
                 for (const haikuObj of haikus) {
@@ -194,6 +240,77 @@
                     card.innerHTML = `${haikuHtml}${imageHtml}${metaHtml}`;
                     this.haikuGrid.appendChild(card);
                 }
+
+                // Ensure current index is within bounds
+                this.currentIndex = Math.min(this.currentIndex, haikus.length - 1);
+                this.currentIndex = Math.max(this.currentIndex, 0);
+
+                this.updateCarouselPosition();
+                this.updateIndicators(haikus.length);
+                this.updateNavigationButtons(haikus.length);
+            }
+            updateCarouselPosition() {
+                const translateX = -this.currentIndex * 100;
+                this.haikuGrid.style.transform = `translateX(${translateX}%)`;
+            }
+            nextSlide() {
+                const totalItems = this.haikuGrid.children.length;
+                if (totalItems > 0) {
+                    this.currentIndex = (this.currentIndex + 1) % totalItems;
+                    this.updateCarouselPosition();
+                    this.updateIndicators(totalItems);
+                    this.updateNavigationButtons(totalItems);
+                }
+            }
+            previousSlide() {
+                const totalItems = this.haikuGrid.children.length;
+                if (totalItems > 0) {
+                    this.currentIndex = (this.currentIndex - 1 + totalItems) % totalItems;
+                    this.updateCarouselPosition();
+                    this.updateIndicators(totalItems);
+                    this.updateNavigationButtons(totalItems);
+                }
+            }
+            goToSlide(index) {
+                const totalItems = this.haikuGrid.children.length;
+                if (index >= 0 && index < totalItems) {
+                    this.currentIndex = index;
+                    this.updateCarouselPosition();
+                    this.updateIndicators(totalItems);
+                    this.updateNavigationButtons(totalItems);
+                }
+            }
+            updateIndicators(totalItems) {
+                this.indicators.innerHTML = '';
+                for (let i = 0; i < totalItems; i++) {
+                    const indicator = document.createElement('div');
+                    indicator.className = `carousel-indicator ${i === this.currentIndex ? 'active' : ''}`;
+                    indicator.addEventListener('click', () => this.goToSlide(i));
+                    this.indicators.appendChild(indicator);
+                }
+            }
+            updateNavigationButtons(totalItems) {
+                if (totalItems <= 1) {
+                    this.prevBtn.style.display = 'none';
+                    this.nextBtn.style.display = 'none';
+                } else {
+                    this.prevBtn.style.display = 'flex';
+                    this.nextBtn.style.display = 'flex';
+                }
+            }
+            startAutoPlay() {
+                this.stopAutoPlay();
+                if (this.haikuGrid.children.length > 1) {
+                    this.autoPlayInterval = setInterval(() => {
+                        this.nextSlide();
+                    }, this.autoPlayDelay);
+                }
+            }
+            stopAutoPlay() {
+                if (this.autoPlayInterval) {
+                    clearInterval(this.autoPlayInterval);
+                    this.autoPlayInterval = null;
+                }
             }
             escapeHtml(text) {
                 const div = document.createElement('div');
@@ -201,6 +318,7 @@
                 return div.innerHTML;
             }
             destroy() {
+                this.stopAutoPlay();
                 if (this.eventSource) this.eventSource.close();
             }
         }
