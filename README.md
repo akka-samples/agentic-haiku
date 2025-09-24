@@ -1,4 +1,4 @@
-# Akka Haiku - Haiku and Image Generation Service
+# Agentic Haiku - Haiku and Image Generation Service
 
 **Example curl command:**
 ```shell
