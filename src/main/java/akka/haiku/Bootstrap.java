@@ -13,12 +13,15 @@ import akka.javasdk.ServiceSetup;
 import akka.javasdk.annotations.Setup;
 import akka.javasdk.client.ComponentClient;
 import com.typesafe.config.Config;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
 @Setup
 public class Bootstrap implements ServiceSetup {
 
+  private static final Logger log = LoggerFactory.getLogger(Bootstrap.class);
   private final ComponentClient componentClient;
   private final int tokenGroupSize;
   private final Config config;
@@ -59,6 +62,7 @@ public class Bootstrap implements ServiceSetup {
   private BlobStorage createBlobStorage() {
     var googleApplicationCredentials = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
     if (googleApplicationCredentials == null || googleApplicationCredentials.isEmpty()) {
+      log.debug("Using LocalStorage for blobs");
       return new LocalStorage();
     } else {
       return new GCPBlobStorage();
@@ -68,6 +72,7 @@ public class Bootstrap implements ServiceSetup {
   private ImageGenerator createImageGenerator(BlobStorage blobStorage) {
     var googleApplicationCredentials = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
     if (googleApplicationCredentials == null || googleApplicationCredentials.isEmpty()) {
+      log.debug("Using FixedImageGenerator for images");
       return new FixedImageGenerator();
     } else {
       return new GeminiImageGenerator(blobStorage);
