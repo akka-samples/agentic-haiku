@@ -35,23 +35,20 @@ public class GeminiImageGenerator implements ImageGenerator {
     try {
       String projectId = "akka-dev-ai";
       String location = "us-central1";
-      String prompt = "Create a image with a good background for the following haiku: \n " + haiku +
-        "\n generated based on this input: \n" + userInput;
+      String prompt = "Create a image with a good background for the haiku. Do not include text in the image. " +
+        "Here is the haiku: \n " + haiku +
+        "\n It was generated based on this input: \n" + userInput;
 
-      final String endpoint = String.format("%s-aiplatform.googleapis.com:443", location);
+      String endpoint = String.format("%s-aiplatform.googleapis.com:443", location);
       PredictionServiceSettings predictionServiceSettings =
         PredictionServiceSettings.newBuilder().setEndpoint(endpoint).build();
-
-// --- Initialize the GCS client once ---
-// This will use Application Default Credentials to authenticate.
-      Storage storage = StorageOptions.getDefaultInstance().getService();
 
       // Initialize client that will be used to send requests. This client only needs to be created
       // once, and can be reused for multiple requests.
       try (PredictionServiceClient predictionServiceClient =
-             PredictionServiceClient.create(predictionServiceSettings)) {
+               PredictionServiceClient.create(predictionServiceSettings)) {
 
-        final EndpointName endpointName =
+        EndpointName endpointName =
           EndpointName.ofProjectLocationPublisherModelName(
             projectId, location, "google", "imagen-3.0-generate-001");
 
