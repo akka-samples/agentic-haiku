@@ -32,6 +32,7 @@ public class TokenGroupConsumer extends Consumer {
       log.info("New token group created {}, generating new qr code", tokenGroup.groupId());
       log.info("Go to form url: {}", "http://localhost:9000/gateway/" + tokenGroup.groupId());
       var qrCodeUrl = qrCodeGenerator.generate(tokenGroup.groupId());
+      log.info("New qr code url: {}", qrCodeUrl);
       componentClient.forKeyValueEntity(tokenGroup.groupId())
         .method(QrCodeEntity::create)
         .invokeAsync(qrCodeUrl);
