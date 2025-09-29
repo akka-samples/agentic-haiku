@@ -29,7 +29,7 @@ public class GenerationProgressView extends View {
     return queryResult();
   }
 
-  @Consume.FromWorkflow(HaikGenerationWorkflow.class)
+  @Consume.FromWorkflow(HaikuGenerationWorkflow.class)
   public static class GenerationProgressUpdater extends TableUpdater<Progress> {
 
     public Effect<Progress> onChange(ContentGeneration contentGeneration) {

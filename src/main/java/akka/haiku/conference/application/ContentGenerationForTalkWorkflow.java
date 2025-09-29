@@ -1,7 +1,7 @@
 package akka.haiku.conference.application;
 
 import akka.Done;
-import akka.haiku.generator.application.HaikGenerationWorkflow;
+import akka.haiku.generator.application.HaikuGenerationWorkflow;
 import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.http.HttpClient;
@@ -92,8 +92,8 @@ public class ContentGenerationForTalkWorkflow extends Workflow<ContentGeneration
     // later, when the Haiku is ready, we will extract the ID and send the Haiku to the speakers
     this.componentClient
       .forWorkflow(talkId + ":" + UUID.randomUUID().toString())
-      .method(HaikGenerationWorkflow::start)
-      .invoke(new HaikGenerationWorkflow.StartGeneration(words));
+      .method(HaikuGenerationWorkflow::start)
+      .invoke(new HaikuGenerationWorkflow.StartGeneration(words));
 
     return stepEffects()
       .updateState(currentState().asIdle())

@@ -6,8 +6,6 @@ import akka.haiku.generator.domain.Haiku;
 import akka.haiku.generator.domain.UserInput;
 import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.client.ComponentClient;
-import akka.javasdk.http.HttpClientProvider;
-import akka.javasdk.timer.TimerScheduler;
 import akka.javasdk.workflow.Workflow;
 import akka.javasdk.workflow.WorkflowContext;
 import com.typesafe.config.Config;
@@ -18,18 +16,18 @@ import static akka.Done.done;
 import static java.time.Duration.ofSeconds;
 
 @ComponentId("image-generation-workflow")
-public class HaikGenerationWorkflow extends Workflow<ContentGeneration> {
+public class HaikuGenerationWorkflow extends Workflow<ContentGeneration> {
 
-  private static final Logger log = LoggerFactory.getLogger(HaikGenerationWorkflow.class);
+  private static final Logger log = LoggerFactory.getLogger(HaikuGenerationWorkflow.class);
   private final ComponentClient componentClient;
   private final String workflowId;
   private final ImageGenerator imageGenerator;
   private final double failureRate;
 
-  public HaikGenerationWorkflow(WorkflowContext workflowContext,
-                                ComponentClient componentClient,
-                                ImageGenerator imageGenerator,
-                                Config config) {
+  public HaikuGenerationWorkflow(WorkflowContext workflowContext,
+                                 ComponentClient componentClient,
+                                 ImageGenerator imageGenerator,
+                                 Config config) {
     this.componentClient = componentClient;
     this.workflowId = workflowContext.workflowId();
     this.imageGenerator = imageGenerator;
@@ -44,9 +42,9 @@ public class HaikGenerationWorkflow extends Workflow<ContentGeneration> {
   public WorkflowSettings settings() {
     return WorkflowSettings.builder()
       .defaultStepTimeout(ofSeconds(15))
-      .defaultStepRecovery(maxRetries(5).failoverTo(HaikGenerationWorkflow::timeoutStep))
-      .stepTimeout(HaikGenerationWorkflow::generateImage, ofSeconds(30))
-      .stepRecovery(HaikGenerationWorkflow::generateImage, maxRetries(3).failoverTo(HaikGenerationWorkflow::timeoutStep))
+      .defaultStepRecovery(maxRetries(5).failoverTo(HaikuGenerationWorkflow::timeoutStep))
+      .stepTimeout(HaikuGenerationWorkflow::generateImage, ofSeconds(30))
+      .stepRecovery(HaikuGenerationWorkflow::generateImage, maxRetries(3).failoverTo(HaikuGenerationWorkflow::timeoutStep))
       .build();
   }
 
@@ -59,7 +57,7 @@ public class HaikGenerationWorkflow extends Workflow<ContentGeneration> {
 
       return effects()
         .updateState(ContentGeneration.empty())
-        .transitionTo(HaikGenerationWorkflow::checkMessageQuality)
+        .transitionTo(HaikuGenerationWorkflow::checkMessageQuality)
         .withInput(UserInput.of(startGeneration.input))
         .thenReply(done());
     }
@@ -100,7 +98,7 @@ public class HaikGenerationWorkflow extends Workflow<ContentGeneration> {
       log.debug("Workflow [{}]: message is accepted.", workflowId);
       return stepEffects()
         .updateState(currentState().accepted())
-        .thenTransitionTo(HaikGenerationWorkflow::analyseSentiment)
+        .thenTransitionTo(HaikuGenerationWorkflow::analyseSentiment)
         .withInput(evaluated);
 
     } else {
@@ -131,7 +129,7 @@ public class HaikGenerationWorkflow extends Workflow<ContentGeneration> {
       log.debug("Workflow [{}]: message is positive or neutral, generating a Haiku...", workflowId);
       return stepEffects()
         .updateState(currentState().validated().withUserInput(userInput.originalInput()))
-        .thenTransitionTo(HaikGenerationWorkflow::generateHaiku)
+        .thenTransitionTo(HaikuGenerationWorkflow::generateHaiku)
         .withInput(evaluated);
     }
   }
@@ -147,7 +145,7 @@ public class HaikGenerationWorkflow extends Workflow<ContentGeneration> {
 
     return stepEffects()
       .updateState(currentState().withHaiku(haiku))
-      .thenTransitionTo(HaikGenerationWorkflow::generateImage)
+      .thenTransitionTo(HaikuGenerationWorkflow::generateImage)
       .withInput(haiku);
   }
 

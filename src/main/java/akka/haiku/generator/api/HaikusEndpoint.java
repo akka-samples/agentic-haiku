@@ -1,6 +1,6 @@
 package akka.haiku.generator.api;
 
-import akka.haiku.generator.application.HaikGenerationWorkflow;
+import akka.haiku.generator.application.HaikuGenerationWorkflow;
 import akka.haiku.generator.application.GenerationProgressView;
 import akka.haiku.generator.application.HaikuView;
 import akka.http.javadsl.model.HttpResponse;
@@ -36,8 +36,8 @@ public record HaikusEndpoint(ComponentClient componentClient, Materializer mater
 
     var response =
       componentClient.forWorkflow(haikuId)
-        .method(HaikGenerationWorkflow::start)
-        .invoke(new HaikGenerationWorkflow.StartGeneration(input.message));
+        .method(HaikuGenerationWorkflow::start)
+        .invoke(new HaikuGenerationWorkflow.StartGeneration(input.message));
 
     var location = "/haikus/" + haikuId;
     return HttpResponses.created(location, location);
@@ -48,7 +48,7 @@ public record HaikusEndpoint(ComponentClient componentClient, Materializer mater
 
     var state =
       componentClient.forWorkflow(haikuId)
-        .method(HaikGenerationWorkflow::getState)
+        .method(HaikuGenerationWorkflow::getState)
         .invoke();
 
     return new HaikuApiModel(

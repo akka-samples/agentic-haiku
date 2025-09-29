@@ -1,6 +1,6 @@
 package akka.haiku.generator.api;
 
-import akka.haiku.generator.application.HaikGenerationWorkflow;
+import akka.haiku.generator.application.HaikuGenerationWorkflow;
 import akka.haiku.generator.application.HaikuView;
 import akka.http.javadsl.model.HttpResponse;
 import akka.javasdk.annotations.http.Delete;
@@ -26,7 +26,7 @@ public record HaikuBackofficeEndpoint(ComponentClient componentClient) {
   @Delete("/{haikuId}")
   public HttpResponse delete(String haikuId) {
     componentClient.forWorkflow(haikuId)
-      .method(HaikGenerationWorkflow::delete)
+      .method(HaikuGenerationWorkflow::delete)
       .invoke();
     return HttpResponses.ok();
   }
