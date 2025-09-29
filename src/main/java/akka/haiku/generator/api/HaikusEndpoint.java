@@ -25,9 +25,9 @@ import static java.time.Duration.ofSeconds;
 // and often set more limited
 @Acl(allow = @Acl.Matcher(principal = Acl.Principal.INTERNET))
 @HttpEndpoint("/haikus")
-public record AkkaHaikusEndpoint(ComponentClient componentClient, Materializer materializer) {
+public record HaikusEndpoint(ComponentClient componentClient, Materializer materializer) {
 
-  private static final Logger log = LoggerFactory.getLogger(AkkaHaikusEndpoint.class);
+  private static final Logger log = LoggerFactory.getLogger(HaikusEndpoint.class);
 
   public record Input(String message) {}
 

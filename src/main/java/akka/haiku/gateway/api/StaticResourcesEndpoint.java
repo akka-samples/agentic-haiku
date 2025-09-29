@@ -22,9 +22,14 @@ public class StaticResourcesEndpoint {
     return HttpResponses.staticResource("form.html");
   }
 
-  @Get("scan-qr-code")
+  @Get("/scan-qr-code")
   public HttpResponse scanQrCode() {
     return HttpResponses.staticResource("scan-qr-code.html");
+  }
+
+  @Get("/audit")
+  public HttpResponse audit() {
+    return HttpResponses.staticResource("audit.html");
   }
 
   @Get("/static/**") 

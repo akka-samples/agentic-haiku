@@ -10,5 +10,5 @@
  -->
 <included>
     <logger name="akka.haiku" level="DEBUG"/>
-    <logger name="akka.haiku.generator.api.AkkaHaikusEndpoint" level="INFO"/>
+    <logger name="akka.haiku.generator.api.HaikusEndpoint" level="DEBUG"/>
 </included>

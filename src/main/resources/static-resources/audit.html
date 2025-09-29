@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generated Haikus - Agentic Haiku</title>
+    <link rel="stylesheet" href="static/style.css">
+    <style>
+        .haikus-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #1a1c1f;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .haikus-table th,
+        .haikus-table td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid #2a2d31;
+        }
+
+        .haikus-table th {
+            background: #2a2d31;
+            font-weight: 600;
+            color: #f5f6fa;
+        }
+
+        .haikus-table tbody tr:hover {
+            background: #252830;
+        }
+
+        .haikus-table tbody tr.deleted {
+            background: #2d1b1b;
+            opacity: 0.7;
+        }
+
+        .haikus-table tbody tr.deleted:hover {
+            background: #3d2525;
+        }
+
+        .haikus-table tbody tr.deleted .haiku-text,
+        .haikus-table tbody tr.deleted .prompt-text,
+        .haikus-table tbody tr.deleted .generated-date {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        .haiku-text {
+            font-style: italic;
+            line-height: 1.4;
+            white-space: pre-line;
+            min-width: 200px;
+        }
+
+        .thumbnail {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .thumbnail:hover {
+            transform: scale(1.05);
+            transition: transform 0.2s;
+        }
+
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+
+        .delete-btn:disabled {
+            background: #7f8c8d;
+            cursor: not-allowed;
+        }
+
+        .generated-date {
+            color: #bdc3c7;
+            font-size: 14px;
+        }
+
+        .prompt-text {
+            max-width: 250px;
+            word-wrap: break-word;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #bdc3c7;
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #e74c3c;
+        }
+
+        .no-image {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        .refresh-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .refresh-btn:hover {
+            background: #2980b9;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+        }
+
+        .modal-content {
+            margin: 5% auto;
+            display: block;
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #bbb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Top Banner -->
+        <div class="banner-header">
+            Generated Haikus - Agentic Haiku
+        </div>
+
+        <div class="topline"></div>
+
+        <!-- Content Section -->
+        <div style="padding: 20px;">
+            <button class="refresh-btn" onclick="loadHaikus()">Refresh Haikus</button>
+
+            <div id="loading" class="loading">Loading haikus...</div>
+            <div id="error" class="error" style="display: none;"></div>
+
+            <table class="haikus-table" id="haikuTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Generated</th>
+                        <th>Prompt</th>
+                        <th>Haiku</th>
+                        <th>Image</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="haikuTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="modal">
+        <span class="close">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
+
+    <script>
+        class HaikuManager {
+            constructor() {
+                this.haikus = [];
+                this.loadHaikus();
+                this.setupModal();
+            }
+
+            async loadHaikus() {
+                const loadingDiv = document.getElementById('loading');
+                const errorDiv = document.getElementById('error');
+                const table = document.getElementById('haikuTable');
+
+                loadingDiv.style.display = 'block';
+                errorDiv.style.display = 'none';
+                table.style.display = 'none';
+
+                try {
+                    const response = await fetch('/haikus-backoffice');
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    const haikuItems = await response.json();
+                    this.haikus = haikuItems.items || haikuItems; // Handle both array and wrapped response
+                    this.renderHaikus();
+
+                    loadingDiv.style.display = 'none';
+                    table.style.display = 'table';
+
+                } catch (error) {
+                    console.error('Error loading haikus:', error);
+                    loadingDiv.style.display = 'none';
+                    errorDiv.textContent = `Failed to load haikus: ${error.message}`;
+                    errorDiv.style.display = 'block';
+                }
+            }
+
+            renderHaikus() {
+                const tbody = document.getElementById('haikuTableBody');
+                tbody.innerHTML = '';
+
+                if (this.haikus.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: #7f8c8d;">No haikus found</td></tr>';
+                    return;
+                }
+
+                this.haikus.forEach(haiku => {
+                    const row = this.createHaikuRow(haiku);
+                    tbody.appendChild(row);
+                });
+            }
+
+            createHaikuRow(haiku) {
+                const row = document.createElement('tr');
+
+                // Apply deleted styling if haiku is deleted
+                if (haiku.deleted) {
+                    row.classList.add('deleted');
+                }
+
+                // Generated date
+                const dateCell = document.createElement('td');
+                if (haiku.generatedAt) {
+                    const date = new Date(haiku.generatedAt);
+                    dateCell.innerHTML = `<div class="generated-date">${date.toLocaleDateString()}<br>${date.toLocaleTimeString()}</div>`;
+                } else {
+                    dateCell.innerHTML = '<div class="generated-date">-</div>';
+                }
+
+                // Prompt
+                const promptCell = document.createElement('td');
+                promptCell.innerHTML = `<div class="prompt-text">${this.escapeHtml(haiku.prompt || '-')}</div>`;
+
+                // Haiku text
+                const haikuCell = document.createElement('td');
+                if (haiku.haiku) {
+                    const haikuText = [haiku.haiku.line1, haiku.haiku.line2, haiku.haiku.line3]
+                        .filter(line => line)
+                        .join('\n');
+                    haikuCell.innerHTML = `<div class="haiku-text">${this.escapeHtml(haikuText)}</div>`;
+                } else {
+                    haikuCell.innerHTML = '<div class="no-image">No haiku generated</div>';
+                }
+
+                // Image thumbnail
+                const imageCell = document.createElement('td');
+                if (haiku.image && haiku.image.url) {
+                    imageCell.innerHTML = `<img src="${this.escapeHtml(haiku.image.url)}" alt="Generated image" class="thumbnail" onclick="haikuManager.showImage('${this.escapeHtml(haiku.image.url)}')">`;
+                } else {
+                    imageCell.innerHTML = '<div class="no-image">No image</div>';
+                }
+
+                // Actions
+                const actionsCell = document.createElement('td');
+                actionsCell.innerHTML = `<button class="delete-btn" onclick="haikuManager.deleteHaiku('${haiku.id}')" ${!haiku.id ? 'disabled' : ''}>Delete</button>`;
+
+                row.appendChild(dateCell);
+                row.appendChild(promptCell);
+                row.appendChild(haikuCell);
+                row.appendChild(imageCell);
+                row.appendChild(actionsCell);
+
+                return row;
+            }
+
+            showImage(imageUrl) {
+                const modal = document.getElementById('imageModal');
+                const modalImg = document.getElementById('modalImage');
+                modal.style.display = 'block';
+                modalImg.src = imageUrl;
+            }
+
+            setupModal() {
+                const modal = document.getElementById('imageModal');
+                const span = document.getElementsByClassName('close')[0];
+
+                span.onclick = function() {
+                    modal.style.display = 'none';
+                }
+
+                modal.onclick = function(event) {
+                    if (event.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                }
+            }
+
+            async deleteHaiku(haikuId) {
+                if (!haikuId) {
+                    alert('Cannot delete haiku: No ID available');
+                    return;
+                }
+
+                if (!confirm('Are you sure you want to delete this haiku?')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/haikus-backoffice/${haikuId}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        // Mark haiku as deleted in local data
+                        const haiku = this.haikus.find(h => h.id === haikuId);
+                        if (haiku) {
+                            haiku.deleted = true;
+                        }
+
+                        // Apply deleted styling immediately to the row
+                        const rows = document.querySelectorAll('#haikuTableBody tr');
+                        for (let row of rows) {
+                            const deleteBtn = row.querySelector('.delete-btn');
+                            if (deleteBtn && deleteBtn.onclick.toString().includes(haikuId)) {
+                                row.classList.add('deleted');
+                                break;
+                            }
+                        }
+                    } else {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                } catch (error) {
+                    console.error('Error deleting haiku:', error);
+                    alert(`Failed to delete haiku: ${error.message}`);
+                }
+            }
+
+            escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        }
+
+        // Global reference for onclick handlers
+        let haikuManager;
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            haikuManager = new HaikuManager();
+        });
+
+        // Global function for refresh button
+        function loadHaikus() {
+            haikuManager.loadHaikus();
+        }
+    </script>
+</body>
+</html>
