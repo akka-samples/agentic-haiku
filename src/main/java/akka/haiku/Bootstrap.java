@@ -1,5 +1,7 @@
 package akka.haiku;
 
+import akka.haiku.conference.api.ScheduleEndpoint;
+import akka.haiku.conference.application.ScheduleScanner;
 import akka.haiku.gateway.application.QrCodeGenerator;
 import akka.haiku.gateway.application.TokenGroupEntity;
 import akka.haiku.generator.application.ImageGenerator;
@@ -12,6 +14,9 @@ import akka.javasdk.DependencyProvider;
 import akka.javasdk.ServiceSetup;
 import akka.javasdk.annotations.Setup;
 import akka.javasdk.client.ComponentClient;
+import akka.javasdk.http.HttpClient;
+import akka.javasdk.http.HttpClientProvider;
+import akka.javasdk.timer.TimerScheduler;
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,11 +30,22 @@ public class Bootstrap implements ServiceSetup {
   private final ComponentClient componentClient;
   private final int tokenGroupSize;
   private final Config config;
+  private final HttpClient httpClient;
+  private final TimerScheduler timerScheduler;
 
-  public Bootstrap(Config config, ComponentClient componentClient) {
+  public Bootstrap(Config config,
+                   ComponentClient componentClient,
+                   HttpClientProvider httpClientProvider,
+                   TimerScheduler timerScheduler
+
+  ) {
+
+    this.httpClient = httpClientProvider.httpClientFor("https://dvbe25.cfp.dev");
+    this.timerScheduler = timerScheduler;
     this.componentClient = componentClient;
     this.config = config;
     this.tokenGroupSize = config.getInt("haiku.app.token-group-size");
+
   }
 
   @Override
@@ -37,6 +53,7 @@ public class Bootstrap implements ServiceSetup {
     componentClient.forKeyValueEntity(UUID.randomUUID().toString())
       .method(TokenGroupEntity::create)
       .invokeAsync(tokenGroupSize);
+
   }
 
   @Override
@@ -44,11 +61,14 @@ public class Bootstrap implements ServiceSetup {
     var blobStorage = createBlobStorage();
     var imageGenerator = createImageGenerator(blobStorage);
     var qrCodeGenerator = new QrCodeGenerator(blobStorage, config);
+    var scanner = new ScheduleScanner(httpClient, timerScheduler, componentClient);
 
     return new DependencyProvider() { // <3>
       @Override
       public <T> T getDependency(Class<T> clazz) {
-        if (clazz == ImageGenerator.class) {
+        if (clazz == ScheduleScanner.class) {
+          return (T) scanner;
+        } else if (clazz == ImageGenerator.class) {
           return (T) imageGenerator;
         } else if (clazz == QrCodeGenerator.class) {
           return (T) qrCodeGenerator;

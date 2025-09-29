@@ -31,7 +31,7 @@ public class HaikuView extends View {
 
   public record GeneratedContentItems(List<GeneratedContent> items){}
 
-  @Consume.FromWorkflow(AgentTeamWorkflow.class)
+  @Consume.FromWorkflow(HaikGenerationWorkflow.class)
   public static class ImagesUpdater extends TableUpdater<GeneratedContent> {
 
     public Effect<GeneratedContent> onChange(ContentGeneration contentGeneration) {
