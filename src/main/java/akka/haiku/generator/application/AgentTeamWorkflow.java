@@ -71,6 +71,14 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
     }
   }
 
+  public Effect<Done> delete() {
+    if (currentState() != null) {
+      return effects().delete().thenReply(done());
+    } else {
+      throw new IllegalStateException("Current state is null");
+    }
+  }
+
   private StepEffect checkMessageQuality(UserInput userInput) {
 
     log.debug("Workflow [{}]: checking message quality.", workflowId);

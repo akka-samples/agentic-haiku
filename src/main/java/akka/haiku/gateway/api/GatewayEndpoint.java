@@ -62,6 +62,13 @@ public class GatewayEndpoint {
     }
   }
 
+  @Get("/gateway/{tokenGroupId}/token")
+  public String getToken(String tokenGroupId) {
+    return componentClient.forKeyValueEntity(tokenGroupId)
+      .method(TokenGroupEntity::getToken)
+      .invoke();
+  }
+
   @Post("/gateway/inputs")
   public HttpResponse addInput(AddInputRequest request) {
 
