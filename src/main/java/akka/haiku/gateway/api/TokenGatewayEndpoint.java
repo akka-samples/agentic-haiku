@@ -21,9 +21,9 @@ import static akka.http.javadsl.model.StatusCodes.UNAUTHORIZED;
 
 @Acl(allow = @Acl.Matcher(principal = Acl.Principal.INTERNET))
 @HttpEndpoint
-public class GatewayEndpoint {
+public class TokenGatewayEndpoint {
 
-  private static final Logger log = LoggerFactory.getLogger(GatewayEndpoint.class);
+  private static final Logger log = LoggerFactory.getLogger(TokenGatewayEndpoint.class);
   private final ComponentClient componentClient;
 
   public record AddInputRequest(String tokenGroupId, String token, String input) {
@@ -38,7 +38,7 @@ public class GatewayEndpoint {
     }
   }
 
-  public GatewayEndpoint(ComponentClient componentClient) {
+  public TokenGatewayEndpoint(ComponentClient componentClient) {
     this.componentClient = componentClient;
   }
 
