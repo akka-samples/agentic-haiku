@@ -16,18 +16,18 @@ import static akka.Done.done;
 import static java.time.Duration.ofSeconds;
 
 @ComponentId("image-generation-workflow")
-public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
+public class HaikuGenerationWorkflow extends Workflow<ContentGeneration> {
 
-  private static final Logger log = LoggerFactory.getLogger(AgentTeamWorkflow.class);
+  private static final Logger log = LoggerFactory.getLogger(HaikuGenerationWorkflow.class);
   private final ComponentClient componentClient;
   private final String workflowId;
   private final ImageGenerator imageGenerator;
   private final double failureRate;
 
-  public AgentTeamWorkflow(WorkflowContext workflowContext,
-                           ComponentClient componentClient,
-                           ImageGenerator imageGenerator,
-                           Config config) {
+  public HaikuGenerationWorkflow(WorkflowContext workflowContext,
+                                 ComponentClient componentClient,
+                                 ImageGenerator imageGenerator,
+                                 Config config) {
     this.componentClient = componentClient;
     this.workflowId = workflowContext.workflowId();
     this.imageGenerator = imageGenerator;
@@ -42,9 +42,9 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
   public WorkflowSettings settings() {
     return WorkflowSettings.builder()
       .defaultStepTimeout(ofSeconds(15))
-      .defaultStepRecovery(maxRetries(5).failoverTo(AgentTeamWorkflow::timeoutStep))
-      .stepTimeout(AgentTeamWorkflow::generateImage, ofSeconds(30))
-      .stepRecovery(AgentTeamWorkflow::generateImage, maxRetries(3).failoverTo(AgentTeamWorkflow::timeoutStep))
+      .defaultStepRecovery(maxRetries(5).failoverTo(HaikuGenerationWorkflow::timeoutStep))
+      .stepTimeout(HaikuGenerationWorkflow::generateImage, ofSeconds(30))
+      .stepRecovery(HaikuGenerationWorkflow::generateImage, maxRetries(3).failoverTo(HaikuGenerationWorkflow::timeoutStep))
       .build();
   }
 
@@ -57,7 +57,7 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
 
       return effects()
         .updateState(ContentGeneration.empty())
-        .transitionTo(AgentTeamWorkflow::checkMessageQuality)
+        .transitionTo(HaikuGenerationWorkflow::checkMessageQuality)
         .withInput(UserInput.of(startGeneration.input))
         .thenReply(done());
     }
@@ -98,7 +98,7 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
       log.debug("Workflow [{}]: message is accepted.", workflowId);
       return stepEffects()
         .updateState(currentState().accepted())
-        .thenTransitionTo(AgentTeamWorkflow::analyseSentiment)
+        .thenTransitionTo(HaikuGenerationWorkflow::analyseSentiment)
         .withInput(evaluated);
 
     } else {
@@ -129,7 +129,7 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
       log.debug("Workflow [{}]: message is positive or neutral, generating a Haiku...", workflowId);
       return stepEffects()
         .updateState(currentState().validated().withUserInput(userInput.originalInput()))
-        .thenTransitionTo(AgentTeamWorkflow::generateHaiku)
+        .thenTransitionTo(HaikuGenerationWorkflow::generateHaiku)
         .withInput(evaluated);
     }
   }
@@ -145,7 +145,7 @@ public class AgentTeamWorkflow extends Workflow<ContentGeneration> {
 
     return stepEffects()
       .updateState(currentState().withHaiku(haiku))
-      .thenTransitionTo(AgentTeamWorkflow::generateImage)
+      .thenTransitionTo(HaikuGenerationWorkflow::generateImage)
       .withInput(haiku);
   }
 

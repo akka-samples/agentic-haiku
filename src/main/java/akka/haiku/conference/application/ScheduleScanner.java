@@ -5,37 +5,38 @@ import akka.javasdk.client.ComponentClient;
 import akka.javasdk.http.HttpClient;
 import akka.javasdk.http.HttpClientProvider;
 import akka.javasdk.timedaction.TimedAction;
+import akka.javasdk.timer.TimerScheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-@ComponentId("schedule-scanner")
-public class ScheduleScanner extends TimedAction {
+public class ScheduleScanner {
 
   private static final Logger log = LoggerFactory.getLogger(ScheduleScanner.class);
   private final HttpClient httpClient;
   private final ComponentClient componentClient;
-  private final List<String> DAYS = List.of("wednesday", "thursday", "friday");
-  private final Duration DELAY = Duration.ofHours(1);
+  private final TimerScheduler timerScheduler;
 
-  public ScheduleScanner(HttpClientProvider httpClientProvider, ComponentClient componentClient) {
-    this.httpClient = httpClientProvider.httpClientFor("https://dvbe25.cfp.dev");
+  private final Duration DELAY = Duration.ofMinutes(10);
+
+  public ScheduleScanner(HttpClient httpClient,
+                         TimerScheduler timerScheduler,
+                         ComponentClient componentClient) {
+    this.timerScheduler = timerScheduler;
+    this.httpClient = httpClient;
     this.componentClient = componentClient;
   }
 
-  public Effect scanConference() {
-    DAYS.forEach(day -> scheduleTimersFor(day, DELAY));
-    return effects().done();
-  }
-
-  private void scheduleTimersFor(String day, Duration delay) {
-    List<ScheduleSlot> scheduleSlots = httpClient.GET("/api/public/schedules/wednesday")
+  public void scheduleTimersFor(String day) {
+    log.info("Scheduling timer for day {}", day);
+    List<ScheduleSlot> scheduleSlots = httpClient.GET("/api/public/schedules/" + day)
       .responseBodyAsListOf(ScheduleSlot.class)
       .invoke()
       .body();
@@ -53,11 +54,11 @@ public class ScheduleScanner extends TimedAction {
         var now = Instant.now().truncatedTo(ChronoUnit.MINUTES);
 
         var durationUntilTalk = Duration.between(now, belgiumTime.toInstant());
-        var durationUntilGeneration = durationUntilTalk.minus(delay);
+        var durationUntilGeneration = durationUntilTalk.minus(DELAY);
 
-        String timerName = "talk-" + day + "-" + scheduleSlot.id() + "-" + belgiumTime.toLocalTime();
+        String timerName = timerName(scheduleSlot.proposal().id());
 
-        timers().createSingleTimer(
+        timerScheduler.createSingleTimer(
           timerName,
           durationUntilGeneration,
           componentClient.forWorkflow(String.valueOf(scheduleSlot.proposal().id()))
@@ -73,4 +74,21 @@ public class ScheduleScanner extends TimedAction {
       });
   }
 
+  private String timerName(int proposalId) {
+    return "talk-" + proposalId;
+  }
+
+
+  public void scheduleNow(int proposalId) {
+    String timerName = timerName(proposalId);
+    timerScheduler.createSingleTimer(
+      timerName,
+      Duration.ofSeconds(0),
+      componentClient.forWorkflow(String.valueOf(proposalId))
+        .method(ContentGenerationForTalkWorkflow::start)
+        .deferred()
+    );
+
+
+  }
 }

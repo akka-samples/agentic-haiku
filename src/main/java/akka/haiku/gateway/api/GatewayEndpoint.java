@@ -1,7 +1,7 @@
 package akka.haiku.gateway.api;
 
 import akka.haiku.gateway.application.TokenGroupEntity;
-import akka.haiku.generator.application.AgentTeamWorkflow;
+import akka.haiku.generator.application.HaikuGenerationWorkflow;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.model.headers.HttpCookie;
@@ -96,8 +96,8 @@ public class GatewayEndpoint {
 
       componentClient
         .forWorkflow(request.token)
-        .method(AgentTeamWorkflow::start)
-        .invoke(new AgentTeamWorkflow.StartGeneration(request.input));
+        .method(HaikuGenerationWorkflow::start)
+        .invoke(new HaikuGenerationWorkflow.StartGeneration(request.input));
 
       return HttpResponses.ok();
     } else {
