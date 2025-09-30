@@ -14,43 +14,43 @@ import org.slf4j.LoggerFactory;
 import java.util.UUID;
 
 @ComponentId("run-content-generation-for-talk")
-public class ContentGenerationForTalkWorkflow extends Workflow<ContentGenerationForTalkWorkflow.ContentGenerationForTalk> {
+public class TalkHaikuGenerationWorkflow extends Workflow<TalkHaikuGenerationWorkflow.State> {
 
-  private final Logger log = LoggerFactory.getLogger(ContentGenerationForTalkWorkflow.class);
+  private final Logger log = LoggerFactory.getLogger(TalkHaikuGenerationWorkflow.class);
   private final String talkId;
   private final ComponentClient componentClient;
   private final HttpClient httpClient;
 
-  public ContentGenerationForTalkWorkflow(WorkflowContext workflowContext,
-                                          ComponentClient componentClient,
-                                          HttpClientProvider httpClientProvider) {
+  public TalkHaikuGenerationWorkflow(WorkflowContext workflowContext,
+                                     ComponentClient componentClient,
+                                     HttpClientProvider httpClientProvider) {
     this.talkId = workflowContext.workflowId();
     this.componentClient = componentClient;
     this.httpClient = httpClientProvider.httpClientFor("https://dvbe25.cfp.dev");
   }
 
 
-  record ContentGenerationForTalk(String talkId, boolean running) {
+  record State(String talkId, boolean running) {
 
-    public ContentGenerationForTalk asRunning() {
-      return new ContentGenerationForTalk(talkId, true);
+    public State asRunning() {
+      return new State(talkId, true);
     }
 
-    public ContentGenerationForTalk asIdle() {
-      return new ContentGenerationForTalk(talkId, false);
+    public State asIdle() {
+      return new State(talkId, false);
     }
   }
 
   @Override
   public WorkflowSettings settings() {
     return WorkflowSettings.builder()
-      .defaultStepRecovery(maxRetries(3).failoverTo(ContentGenerationForTalkWorkflow::abort))
+      .defaultStepRecovery(maxRetries(3).failoverTo(TalkHaikuGenerationWorkflow::abort))
       .build();
   }
 
   @Override
-  public ContentGenerationForTalk emptyState() {
-    return new ContentGenerationForTalk(talkId, false);
+  public State emptyState() {
+    return new State(talkId, false);
   }
 
   public Effect<Done> start() {
@@ -59,7 +59,7 @@ public class ContentGenerationForTalkWorkflow extends Workflow<ContentGeneration
     else
       return effects()
         .updateState(currentState().asRunning())
-        .transitionTo(ContentGenerationForTalkWorkflow::fetchTalk)
+        .transitionTo(TalkHaikuGenerationWorkflow::fetchTalk)
         .thenReply(Done.getInstance());
   }
 
@@ -69,7 +69,7 @@ public class ContentGenerationForTalkWorkflow extends Workflow<ContentGeneration
       httpClient.GET("/api/public/talks/" + talkId).responseBodyAs(Proposal.class).invoke().body();
 
     return stepEffects()
-      .thenTransitionTo(ContentGenerationForTalkWorkflow::selectBuzzWords)
+      .thenTransitionTo(TalkHaikuGenerationWorkflow::selectBuzzWords)
       .withInput(proposal.description());
   }
 
@@ -82,7 +82,7 @@ public class ContentGenerationForTalkWorkflow extends Workflow<ContentGeneration
       .invoke(talkDescription);
 
     return stepEffects()
-      .thenTransitionTo(ContentGenerationForTalkWorkflow::generateHaiku)
+      .thenTransitionTo(TalkHaikuGenerationWorkflow::generateHaiku)
       .withInput(selection);
   }
 
