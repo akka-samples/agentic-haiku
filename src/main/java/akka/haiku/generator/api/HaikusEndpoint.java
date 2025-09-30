@@ -31,18 +31,6 @@ public record HaikusEndpoint(ComponentClient componentClient, Materializer mater
 
   public record Input(String message) {}
 
-  @Put("/{haikuId}")
-  public HttpResponse create(String haikuId, Input input) {
-
-    var response =
-      componentClient.forWorkflow(haikuId)
-        .method(HaikuGenerationWorkflow::start)
-        .invoke(new HaikuGenerationWorkflow.StartGeneration(input.message));
-
-    var location = "/haikus/" + haikuId;
-    return HttpResponses.created(location, location);
-  }
-
   @Get("/{haikuId}")
   public HaikuApiModel getHaiku(String haikuId) {
 
@@ -108,10 +96,10 @@ public record HaikusEndpoint(ComponentClient componentClient, Materializer mater
 
   @Get
   public HttpResponse realTimeContent() {
-    var contentUpdates = componentClient.forView()
+    var haikus = componentClient.forView()
       .stream(HaikuView::get)
       .source();
 
-    return HttpResponses.serverSentEvents(contentUpdates);
+    return HttpResponses.serverSentEvents(haikus);
   }
 }

@@ -11,10 +11,6 @@ public record UserInput(String originalInput, Eval eval) {
     return new UserInput(originalInput, eval);
   }
 
-  public boolean isRejected() {
-    return eval == Eval.TOXIC_CONTENT || eval == Eval.NEGATIVE;
-  }
-
   public boolean isAccepted() {
     return eval == Eval.NEUTRAL || eval == Eval.POSITIVE || eval == Eval.NON_TOXIC_CONTENT;
   }

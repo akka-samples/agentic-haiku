@@ -1,17 +1,13 @@
 package akka.haiku.conference.application;
 
-import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.http.HttpClient;
-import akka.javasdk.http.HttpClientProvider;
-import akka.javasdk.timedaction.TimedAction;
 import akka.javasdk.timer.TimerScheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -62,7 +58,7 @@ public class ScheduleScanner {
           timerName,
           durationUntilGeneration,
           componentClient.forWorkflow(String.valueOf(scheduleSlot.proposal().id()))
-            .method(ContentGenerationForTalkWorkflow::start)
+            .method(TalkHaikuGenerationWorkflow::start)
             .deferred()
         );
 
@@ -80,15 +76,8 @@ public class ScheduleScanner {
 
 
   public void scheduleNow(int proposalId) {
-    String timerName = timerName(proposalId);
-    timerScheduler.createSingleTimer(
-      timerName,
-      Duration.ofSeconds(0),
-      componentClient.forWorkflow(String.valueOf(proposalId))
-        .method(ContentGenerationForTalkWorkflow::start)
-        .deferred()
-    );
-
-
+    componentClient.forWorkflow(String.valueOf(proposalId))
+      .method(TalkHaikuGenerationWorkflow::start)
+      .invoke();
   }
 }

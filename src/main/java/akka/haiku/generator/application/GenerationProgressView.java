@@ -1,7 +1,7 @@
 package akka.haiku.generator.application;
 
-import akka.haiku.generator.domain.ContentGeneration;
-import akka.haiku.generator.domain.ContentGenerationStatus;
+import akka.haiku.generator.domain.HaikuGeneration;
+import akka.haiku.generator.domain.HaikuGenerationStatus;
 import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.annotations.Consume;
 import akka.javasdk.annotations.Query;
@@ -32,25 +32,25 @@ public class GenerationProgressView extends View {
   @Consume.FromWorkflow(HaikuGenerationWorkflow.class)
   public static class GenerationProgressUpdater extends TableUpdater<Progress> {
 
-    public Effect<Progress> onChange(ContentGeneration contentGeneration) {
+    public Effect<Progress> onChange(HaikuGeneration haikuGeneration) {
       if (rowState() == null) {
-        if (contentGeneration.status() == null) { //backward compatibility, remove when deploying final version
+        if (haikuGeneration.status() == null) { //backward compatibility, remove when deploying final version
           return effects().ignore();
         }
         var id = updateContext().eventSubject().get();
-        return effects().updateRow(new Progress(id, false, toProgressLines(contentGeneration.status())));
+        return effects().updateRow(new Progress(id, false, toProgressLines(haikuGeneration.status())));
       } else {
-        if (contentGeneration.status() == null) { //backward compatibility, remove when deploying final version
+        if (haikuGeneration.status() == null) { //backward compatibility, remove when deploying final version
           return effects().ignore();
         }
         return effects().updateRow(rowState()
-          .addLines(toProgressLines(contentGeneration.status()))
-          .setCompleted(contentGeneration.isComplete()));
+          .addLines(toProgressLines(haikuGeneration.status()))
+          .setCompleted(haikuGeneration.isComplete()));
       }
     }
   }
 
-  private static List<String> toProgressLines(ContentGenerationStatus status) {
+  private static List<String> toProgressLines(HaikuGenerationStatus status) {
     return switch (status) {
       case STARTED -> List.of("Verifying message quality.");
       case ACCEPTED -> List.of("Message is accepted.", "Analysing message sentiment.");
