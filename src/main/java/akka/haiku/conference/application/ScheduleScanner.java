@@ -76,15 +76,8 @@ public class ScheduleScanner {
 
 
   public void scheduleNow(int proposalId) {
-    String timerName = timerName(proposalId);
-    timerScheduler.createSingleTimer(
-      timerName,
-      Duration.ofSeconds(0),
-      componentClient.forWorkflow(String.valueOf(proposalId))
-        .method(TalkHaikuGenerationWorkflow::start)
-        .deferred()
-    );
-
-
+    componentClient.forWorkflow(String.valueOf(proposalId))
+      .method(TalkHaikuGenerationWorkflow::start)
+      .invoke();
   }
 }
