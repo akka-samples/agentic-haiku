@@ -35,9 +35,12 @@ public class GeminiImageGenerator implements ImageGenerator {
     try {
       String projectId = "akka-dev-ai";
       String location = "us-central1";
-      String prompt = "Create a image with a good background for the haiku. Do not include text in the image. " +
-        "Here is the haiku: \n " + haiku +
-        "\n It was generated based on this input: \n" + userInput;
+      String prompt = "Create a image inspired by this Haiku (between [])." +
+                "[" + haiku + "]" +
+                "Do not include any kind of text in the image. " +
+                "The image should be in the style of a Japense painting." +
+                "\n The Haiku itself was generated based on this input: \n" + userInput;
+
 
       String endpoint = String.format("%s-aiplatform.googleapis.com:443", location);
       PredictionServiceSettings predictionServiceSettings =
