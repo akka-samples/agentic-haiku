@@ -3,6 +3,7 @@ package akka.haiku.generator.application;
 import akka.Done;
 import akka.haiku.generator.domain.HaikuGeneration;
 import akka.haiku.generator.domain.Haiku;
+import akka.haiku.generator.domain.HaikuId;
 import akka.haiku.generator.domain.UserInput;
 import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.client.ComponentClient;
@@ -53,7 +54,7 @@ public class HaikuGenerationWorkflow extends Workflow<HaikuGeneration> {
       log.info("Workflow [{}]: starting image generation for input: {}", workflowId, input);
 
       return effects()
-        .updateState(HaikuGeneration.empty())
+        .updateState(HaikuGeneration.empty(new HaikuId(workflowId)))
         .transitionTo(HaikuGenerationWorkflow::checkMessageQuality)
         .withInput(UserInput.of(input))
         .thenReply(done());

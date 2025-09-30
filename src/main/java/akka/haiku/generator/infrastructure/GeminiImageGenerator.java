@@ -38,7 +38,7 @@ public class GeminiImageGenerator implements ImageGenerator {
       String prompt = "Create a image inspired by this Haiku (between [])." +
                 "[" + haiku + "]" +
                 "Do not include any kind of text in the image. " +
-                "The image should be in the style of a Japense painting." +
+                "The image should be in the style of a Japanese painting." +
                 "\n The Haiku itself was generated based on this input: \n" + userInput;
 
 
