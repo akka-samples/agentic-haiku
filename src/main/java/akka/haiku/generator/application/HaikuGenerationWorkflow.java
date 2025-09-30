@@ -1,7 +1,7 @@
 package akka.haiku.generator.application;
 
 import akka.Done;
-import akka.haiku.generator.domain.ContentGeneration;
+import akka.haiku.generator.domain.HaikuGeneration;
 import akka.haiku.generator.domain.Haiku;
 import akka.haiku.generator.domain.UserInput;
 import akka.javasdk.annotations.ComponentId;
@@ -16,7 +16,7 @@ import static akka.Done.done;
 import static java.time.Duration.ofSeconds;
 
 @ComponentId("image-generation-workflow")
-public class HaikuGenerationWorkflow extends Workflow<ContentGeneration> {
+public class HaikuGenerationWorkflow extends Workflow<HaikuGeneration> {
 
   private static final Logger log = LoggerFactory.getLogger(HaikuGenerationWorkflow.class);
   private final ComponentClient componentClient;
@@ -34,9 +34,6 @@ public class HaikuGenerationWorkflow extends Workflow<ContentGeneration> {
     this.failureRate = config.getDouble("haiku.app.force-failure-rate");
   }
 
-  public record StartGeneration(String input) {
-  }
-
 
   @Override
   public WorkflowSettings settings() {
@@ -48,22 +45,22 @@ public class HaikuGenerationWorkflow extends Workflow<ContentGeneration> {
       .build();
   }
 
-  public Effect<Done> start(StartGeneration startGeneration) {
+  public Effect<Done> start(String input) {
     if (currentState() != null) {
       log.info("Already in progress, ignoring");
       return effects().reply(done());
     } else {
-      log.info("Workflow [{}]: starting image generation for input: {}", workflowId, startGeneration);
+      log.info("Workflow [{}]: starting image generation for input: {}", workflowId, input);
 
       return effects()
-        .updateState(ContentGeneration.empty())
+        .updateState(HaikuGeneration.empty())
         .transitionTo(HaikuGenerationWorkflow::checkMessageQuality)
-        .withInput(UserInput.of(startGeneration.input))
+        .withInput(UserInput.of(input))
         .thenReply(done());
     }
   }
 
-  public ReadOnlyEffect<ContentGeneration> getState() {
+  public ReadOnlyEffect<HaikuGeneration> getState() {
     if (currentState() != null) {
       return effects().reply(currentState());
     } else {

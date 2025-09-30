@@ -16,7 +16,7 @@ import java.util.List;
 public record HaikuBackofficeEndpoint(ComponentClient componentClient) {
 
   @Get
-  public List<HaikuView.GeneratedContent> get() {
+  public List<HaikuView.GeneratedHaiku> get() {
     return componentClient.forView()
       .method(HaikuView::getAll)
       .invoke()

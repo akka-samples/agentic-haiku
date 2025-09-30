@@ -6,7 +6,7 @@ import akka.javasdk.annotations.DeleteHandler;
 import akka.javasdk.annotations.Query;
 import akka.javasdk.view.TableUpdater;
 import akka.javasdk.view.View;
-import akka.haiku.generator.domain.ContentGeneration;
+import akka.haiku.generator.domain.HaikuGeneration;
 import akka.haiku.generator.domain.Haiku;
 import akka.haiku.generator.domain.Image;
 
@@ -17,33 +17,33 @@ import java.util.Optional;
 public class HaikuView extends View {
 
 
-  public record GeneratedContent(String id,
-                                 String prompt,
-                                 Long generatedAt,
-                                 Optional<Haiku> haiku,
-                                 Optional<Image> image,
-                                 boolean deleted){
+  public record GeneratedHaiku(String id,
+                               String prompt,
+                               Long generatedAt,
+                               Optional<Haiku> haiku,
+                               Optional<Image> image,
+                               boolean deleted){
 
-    public GeneratedContent asDeleted() {
-      return new GeneratedContent(id, prompt, generatedAt, haiku, image, true);
+    public GeneratedHaiku asDeleted() {
+      return new GeneratedHaiku(id, prompt, generatedAt, haiku, image, true);
     }
   }
 
-  public record GeneratedContentItems(List<GeneratedContent> items){}
+  public record GeneratedContentItems(List<GeneratedHaiku> items){}
 
   @Consume.FromWorkflow(HaikuGenerationWorkflow.class)
-  public static class ImagesUpdater extends TableUpdater<GeneratedContent> {
+  public static class ImagesUpdater extends TableUpdater<GeneratedHaiku> {
 
-    public Effect<GeneratedContent> onChange(ContentGeneration contentGeneration) {
-      if (contentGeneration.image().isPresent() && contentGeneration.successfullyGenerated()) {
+    public Effect<GeneratedHaiku> onChange(HaikuGeneration haikuGeneration) {
+      if (haikuGeneration.image().isPresent() && haikuGeneration.successfullyGenerated()) {
 
         var id = updateContext().eventSubject().get();
         var content =
-          new GeneratedContent(id,
-            contentGeneration.userInput(),
-            contentGeneration.generatedAt(),
-            contentGeneration.haiku(),
-            contentGeneration.image(),
+          new GeneratedHaiku(id,
+            haikuGeneration.userInput(),
+            haikuGeneration.generatedAt(),
+            haikuGeneration.haiku(),
+            haikuGeneration.image(),
             false);
 
         return effects().updateRow(content);
@@ -53,13 +53,13 @@ public class HaikuView extends View {
     }
 
     @DeleteHandler
-    public Effect<GeneratedContent> onDelete() {
+    public Effect<GeneratedHaiku> onDelete() {
       return effects().updateRow(rowState().asDeleted());
     }
   }
 
   @Query(value = "SELECT * FROM images WHERE deleted = false", streamUpdates = true)
-  public QueryStreamEffect<GeneratedContent> get() {
+  public QueryStreamEffect<GeneratedHaiku> get() {
     return queryStreamResult();
   }
 

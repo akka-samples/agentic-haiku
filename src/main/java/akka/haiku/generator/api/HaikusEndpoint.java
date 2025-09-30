@@ -96,10 +96,10 @@ public record HaikusEndpoint(ComponentClient componentClient, Materializer mater
 
   @Get
   public HttpResponse realTimeContent() {
-    var contentUpdates = componentClient.forView()
+    var haikus = componentClient.forView()
       .stream(HaikuView::get)
       .source();
 
-    return HttpResponses.serverSentEvents(contentUpdates);
+    return HttpResponses.serverSentEvents(haikus);
   }
 }

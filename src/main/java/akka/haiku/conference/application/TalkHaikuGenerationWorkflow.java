@@ -93,7 +93,7 @@ public class TalkHaikuGenerationWorkflow extends Workflow<TalkHaikuGenerationWor
     this.componentClient
       .forWorkflow(talkId + ":" + UUID.randomUUID().toString())
       .method(HaikuGenerationWorkflow::start)
-      .invoke(new HaikuGenerationWorkflow.StartGeneration(words));
+      .invoke(words);
 
     return stepEffects()
       .updateState(currentState().asIdle())

@@ -97,7 +97,7 @@ public class TokenGatewayEndpoint {
       componentClient
         .forWorkflow(request.token)
         .method(HaikuGenerationWorkflow::start)
-        .invoke(new HaikuGenerationWorkflow.StartGeneration(request.input));
+        .invoke(request.input);
 
       return HttpResponses.ok();
     } else {
