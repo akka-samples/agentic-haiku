@@ -279,8 +279,7 @@
             // Actions
             const actionsCell = document.createElement('td');
             actionsCell.innerHTML = `
-                <button class="publish-btn" onclick="event.stopPropagation();postsManager.publishPost('${post.id}')" ${!post.id ? 'disabled' : ''}>Publish</button>
-                <button class="view-btn" onclick="event.stopPropagation();postsManager.regeneratePostByIdAndTalkId('${post.id}','${post.talkId}')" ${!post.talkId ? 'disabled' : ''}>Regenerate</button>
+                <button class="publish-btn" onclick="event.stopPropagation();postsManager.publishPost('${post.id}')" ${!post.id ? 'disabled' : ''}>Publish</button>                <button class="view-btn" onclick="event.stopPropagation();postsManager.regeneratePostByIdAndTalkId('${post.id}')" ${!post.id ? 'disabled' : ''}>Regenerate</button>
                 <button class="reject-btn" onclick="event.stopPropagation();postsManager.rejectPost(event, '${post.id}')" ${!post.id ? 'disabled' : ''}>Reject</button>
             `;
             row.appendChild(idCell);
@@ -300,7 +299,6 @@
             modalBody.innerHTML = `
                 <h2>Post Details</h2>
                 <p><strong>ID:</strong> ${this.escapeHtml(post.id)}</p>
-                <p><strong>Talk ID:</strong> ${this.escapeHtml(post.talkId || '-')}</p>
                 <p><strong>Post:</strong></p>
                 <pre style="white-space: pre-wrap; background: none; color: inherit; border: none; margin: 0; padding: 0; font-family: inherit;">${this.escapeHtml(post.post)}</pre>
                 <p><strong>Image:</strong><br>
@@ -313,17 +311,17 @@
             document.getElementById('postModal').style.display = 'block';
             // Enable/disable Regenerate button in modal
             const regenBtn = document.getElementById('modalRegenerate');
-            regenBtn.disabled = !post.talkId;
+            regenBtn.disabled = !post.id;
         }
-        regeneratePostByIdAndTalkId(postId, talkId) {
-            if (!postId || !talkId) {
-                alert('Missing postId or talkId for regeneration.');
+        regeneratePostByIdAndTalkId(postId) {
+            if (!postId) {
+                alert('Missing postId for regeneration.');
                 return;
             }
             fetch(`/posts/${postId}/reject`, { method: 'POST' })
                 .then(r => {
                     if (!r.ok) throw new Error('Rejection failed');
-                    return fetch(`/schedule/now/${talkId}`, { method: 'POST' });
+                    return fetch(`/schedule/now/${postId}`, { method: 'POST' });
                 })
                 .then(r => {
                     if (!r.ok) throw new Error('Schedule now failed');
@@ -349,11 +347,11 @@
                 this.publishPost(this.currentPost.id);
             };
             document.getElementById('modalRegenerate').onclick = () => {
-                if (!this.currentPost || !this.currentPost.talkId || !this.currentPost.id) {
-                    alert('No talkId or postId available for this post.');
+                if (!this.currentPost || !this.currentPost.id) {
+                    alert('No postId available for this post.');
                     return;
                 }
-                this.regeneratePostByIdAndTalkId(this.currentPost.id, this.currentPost.talkId);
+                this.regeneratePostByIdAndTalkId(this.currentPost.id);
             };
             document.getElementById('modalDelete').onclick = (event) => {
                 event.stopPropagation();
@@ -365,7 +363,7 @@
         publishPost(postId) {
             if (!postId) return;
             fetch(`/posts/${postId}/publish`, { method: 'POST' })
-                .then(r => {
+                .then( r => {
                     if (!r.ok) throw new Error('Publish failed');
                     window.location.reload();
                 })

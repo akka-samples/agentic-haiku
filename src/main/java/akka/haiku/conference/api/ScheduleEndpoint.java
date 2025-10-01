@@ -1,7 +1,6 @@
 package akka.haiku.conference.api;
 
 import akka.haiku.conference.application.ScheduleScanner;
-import akka.javasdk.annotations.http.Get;
 import akka.javasdk.annotations.http.HttpEndpoint;
 import akka.javasdk.annotations.http.Post;
 

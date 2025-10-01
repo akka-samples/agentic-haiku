@@ -1,8 +1,8 @@
 package akka.haiku.generator.application;
 
 import akka.Done;
-import akka.haiku.generator.domain.HaikuGeneration;
 import akka.haiku.generator.domain.Haiku;
+import akka.haiku.generator.domain.HaikuGeneration;
 import akka.haiku.generator.domain.HaikuId;
 import akka.haiku.generator.domain.UserInput;
 import akka.javasdk.annotations.ComponentId;

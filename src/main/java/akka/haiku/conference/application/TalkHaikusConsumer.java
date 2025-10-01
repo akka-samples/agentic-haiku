@@ -49,7 +49,6 @@ public class TalkHaikusConsumer extends Consumer {
             .toList();
 
         var post = SocialPostEntity.SocialPostState.of(
-          haikuGen.haikuId().extractTalkId(),
           haikuGen.haiku().get().formatted(),
           haikuGen.image().get().url(),
           List.of("#akka", "#devoxx"),

@@ -1,11 +1,9 @@
 package akka.haiku.conference.api;
 
 import akka.Done;
-import akka.haiku.conference.application.ScheduleScanner;
 import akka.haiku.conference.application.SocialPostEntity;
 import akka.haiku.conference.application.SocialPostView;
 import akka.http.javadsl.model.HttpResponse;
-import akka.javasdk.annotations.http.Delete;
 import akka.javasdk.annotations.http.Get;
 import akka.javasdk.annotations.http.HttpEndpoint;
 import akka.javasdk.annotations.http.Post;

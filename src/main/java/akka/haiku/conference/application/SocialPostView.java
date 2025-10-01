@@ -12,17 +12,19 @@ import java.util.List;
 @ComponentId("social-post-view")
 public class SocialPostView extends View {
 
-  public record SocialPostRow(String id, String talkId, String post, String url, List<String> tags,
+  public record SocialPostRow(String id, String post, String url, List<String> tags,
                               List<String> xHandlers, List<String> bskyHandlers) {
   }
 
      @Consume.FromKeyValueEntity(SocialPostEntity.class)
     public static class Updater extends TableUpdater<SocialPostRow> {
         public Effect<SocialPostRow> onChange(SocialPostState state) {
+
+
             var id = updateContext().eventSubject().get();
             if (!state.published() && !state.rejected()) {
               var row = new SocialPostRow(
-                id, state.talkId(),
+                id,
                 state.post(),
                 state.imageUrl(),
                 state.tags(),

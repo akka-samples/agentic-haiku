@@ -1,6 +1,5 @@
 package akka.haiku;
 
-import akka.haiku.conference.api.ScheduleEndpoint;
 import akka.haiku.conference.application.ScheduleScanner;
 import akka.haiku.gateway.application.QrCodeGenerator;
 import akka.haiku.gateway.application.TokenGroupEntity;
