@@ -36,7 +36,7 @@ public record HaikuGeneration(HaikuId haikuId,
   }
 
   public boolean isComplete() {
-    return image.isPresent();
+    return haiku.isPresent() && image.isPresent();
   }
 
   public HaikuGeneration accepted() {

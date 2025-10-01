@@ -10,5 +10,5 @@
  -->
 <included>
     <logger name="akka.haiku" level="DEBUG"/>
-    <logger name="akka.runtime.views.Updater" level="ERROR"/>
+    <logger name="akka.runtime.views.Updater" level="OFF"/>
 </included>
