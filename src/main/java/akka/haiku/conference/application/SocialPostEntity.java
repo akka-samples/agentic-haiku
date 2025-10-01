@@ -14,29 +14,28 @@ public class SocialPostEntity extends KeyValueEntity<SocialPostEntity.SocialPost
     private static final Logger log = LoggerFactory.getLogger(SocialPostEntity.class);
 
 
-  public record SocialPostState(
-    String talkId,
-    String post,
+  public record SocialPostState(String talkId,
+                                String post,
                                 String imageUrl,
                                 List<String> tags,
-                                List<String> users,
+                                List<String> xHandlers,
+                                List<String> bskyHandlers,
                                 boolean rejected,
                                 boolean published) {
 
-    public static SocialPostState of(String talkId, String post, String imageUrl, List<String> tags) {
-      return new SocialPostState(talkId, post, imageUrl, tags, List.of(), false, false);
+    public static SocialPostState of(String talkId, String post, String imageUrl, List<String> tags,
+                                     List<String> xHandlers,
+                                     List<String> bskyHandlers) {
+      return new SocialPostState(talkId, post, imageUrl, tags, xHandlers, bskyHandlers, false, false);
       }
 
-      public SocialPostState withUsers(List<String> users) {
-        return new SocialPostState(talkId, post, imageUrl, tags, users, rejected, published);
-      }
 
       public SocialPostState asRejected() {
-        return new SocialPostState(talkId, post, imageUrl, tags, users, true, published);
+        return new SocialPostState(talkId, post, imageUrl, tags, xHandlers, bskyHandlers, true, published);
       }
 
     public SocialPostState asPublished() {
-      return new SocialPostState(talkId, post, imageUrl, tags, users, rejected, true);
+      return new SocialPostState(talkId, post, imageUrl, tags, xHandlers, bskyHandlers, rejected, true);
     }
   }
 

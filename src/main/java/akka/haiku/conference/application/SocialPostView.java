@@ -3,7 +3,6 @@ package akka.haiku.conference.application;
 import akka.haiku.conference.application.SocialPostEntity.SocialPostState;
 import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.annotations.Consume;
-import akka.javasdk.annotations.DeleteHandler;
 import akka.javasdk.annotations.Query;
 import akka.javasdk.view.TableUpdater;
 import akka.javasdk.view.View;
@@ -14,7 +13,7 @@ import java.util.List;
 public class SocialPostView extends View {
 
   public record SocialPostRow(String id, String talkId, String post, String url, List<String> tags,
-                              List<String> users) {
+                              List<String> xHandlers, List<String> bskyHandlers) {
   }
 
      @Consume.FromKeyValueEntity(SocialPostEntity.class)
@@ -27,7 +26,8 @@ public class SocialPostView extends View {
                 state.post(),
                 state.imageUrl(),
                 state.tags(),
-                state.users());
+                state.xHandlers(),
+                state.bskyHandlers());
                 return effects().updateRow(row);
             } else {
                 return effects().deleteRow();

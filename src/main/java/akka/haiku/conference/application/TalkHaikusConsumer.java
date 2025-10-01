@@ -52,34 +52,15 @@ public class TalkHaikusConsumer extends Consumer {
           haikuGen.haikuId().extractTalkId(),
           haikuGen.haiku().get().formatted(),
           haikuGen.image().get().url(),
-          List.of("#akka", "#devoxx")
-        );
+          List.of("#akka", "#devoxx"),
+          xHandlers, blueskyUsers);
 
+          logger.info("Creating post for: {}.", haikuGen.haikuId());
 
-        if (xHandlers.isEmpty() && blueskyUsers.isEmpty()) {
-          logger.info("Creating post for: {}. No social handlers found", haikuGen.haikuId());
           componentClient
             .forKeyValueEntity(proposalId)
             .method(SocialPostEntity::createPost)
             .invoke(post);
-        } else {
-
-          if (!xHandlers.isEmpty()) {
-            logger.info("Creating post for: {}. For X: [{}]", haikuGen.haikuId(), xHandlers);
-            componentClient
-              .forKeyValueEntity("x:" + proposalId)
-              .method(SocialPostEntity::createPost)
-              .invoke(post.withUsers(xHandlers));
-          }
-
-          if (!blueskyUsers.isEmpty()) {
-            logger.info("Creating post for: {}. For BSky: [{}]", haikuGen.haikuId(), xHandlers);
-            componentClient
-              .forKeyValueEntity("bsky:" + proposalId)
-              .method(SocialPostEntity::createPost)
-              .invoke(post.withUsers(blueskyUsers));
-          }
-        }
 
       } catch (Exception e) {
         logger.error("Error fetching haiku: {}", haikuGen.haikuId(), e);
