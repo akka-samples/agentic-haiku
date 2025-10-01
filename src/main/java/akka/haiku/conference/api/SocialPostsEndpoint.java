@@ -42,11 +42,11 @@ public class SocialPostsEndpoint {
       .invoke();
   }
 
-  @Post("/{postId}/publish")
-  public Done publish(String postId) {
+  @Post("/{postId}/approve")
+  public Done approve(String postId) {
     log.info("Publishing Haiku for {}", postId);
     return componentClient
-      .forKeyValueEntity(postId).method(SocialPostEntity::publish)
+      .forKeyValueEntity(postId).method(SocialPostEntity::approvePost)
       .invoke();
   }
 }

@@ -45,7 +45,7 @@ public class SocialPostEntity extends KeyValueEntity<SocialPostEntity.SocialPost
         return effects().updateState(post).thenReply(Done.done());
     }
 
-    public Effect<Done> publish() {
+    public Effect<Done> approvePost() {
         SocialPostState state = currentState();
         if (state == null) {
             return effects().error("Post not found: " + commandContext().entityId());

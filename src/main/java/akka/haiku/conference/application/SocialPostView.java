@@ -18,23 +18,23 @@ public class SocialPostView extends View {
 
      @Consume.FromKeyValueEntity(SocialPostEntity.class)
     public static class Updater extends TableUpdater<SocialPostRow> {
-        public Effect<SocialPostRow> onChange(SocialPostState state) {
-
-
-            var id = updateContext().eventSubject().get();
-            if (!state.published() && !state.rejected()) {
-              var row = new SocialPostRow(
-                id,
-                state.post(),
-                state.imageUrl(),
-                state.tags(),
-                state.xHandlers(),
-                state.bskyHandlers());
-                return effects().updateRow(row);
-            } else {
-                return effects().deleteRow();
-            }
+      public Effect<SocialPostRow> onChange(SocialPostState state) {
+        // this view exist to support the posts-queue
+        // once the post is rejected or published, it's removed
+        var id = updateContext().eventSubject().get();
+        if (!state.published() && !state.rejected()) {
+          var row = new SocialPostRow(
+            id,
+            state.post(),
+            state.imageUrl(),
+            state.tags(),
+            state.xHandlers(),
+            state.bskyHandlers());
+            return effects().updateRow(row);
+        } else {
+            return effects().deleteRow();
         }
+      }
     }
 
     @Query(value = "SELECT * FROM social_post", streamUpdates = true)
