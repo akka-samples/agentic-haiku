@@ -48,7 +48,7 @@ public class SocialPostConsumer extends Consumer {
           "x:" + postId,
           Duration.ofSeconds(10),
           componentClient.forTimedAction()
-            .method(PostPublisherAction::publishOnX)
+            .method(SocialPublisherAction::publishSocialPost)
             .deferred(postId)
         );
       }

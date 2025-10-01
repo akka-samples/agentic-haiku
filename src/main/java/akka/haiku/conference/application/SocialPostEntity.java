@@ -26,6 +26,10 @@ public class SocialPostEntity extends KeyValueEntity<SocialPostEntity.SocialPost
       return status == Status.APPROVED;
     }
 
+    public boolean notRejected() {
+      return status != Status.REJECTED;
+    }
+
 
     public boolean created() {
       return status == Status.CREATED;
