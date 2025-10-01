@@ -19,10 +19,8 @@ public class SocialPostView extends View {
      @Consume.FromKeyValueEntity(SocialPostEntity.class)
     public static class Updater extends TableUpdater<SocialPostRow> {
       public Effect<SocialPostRow> onChange(SocialPostState state) {
-        // this view exist to support the posts-queue
-        // once the post is rejected or published, it's removed
         var id = updateContext().eventSubject().get();
-        if (!state.published() && !state.rejected()) {
+        if (state.created()) {
           var row = new SocialPostRow(
             id,
             state.post(),
@@ -32,6 +30,8 @@ public class SocialPostView extends View {
             state.bskyHandlers());
             return effects().updateRow(row);
         } else {
+            // this view exists to support the posts-queue
+            // once the post is rejected, approved or published, it's removed
             return effects().deleteRow();
         }
       }

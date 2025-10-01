@@ -1,6 +1,9 @@
 package akka.haiku;
 
 import akka.haiku.conference.application.ScheduleScanner;
+import akka.haiku.conference.application.SocialPublisher;
+import akka.haiku.conference.application.SocialPublisherBlueSky;
+import akka.haiku.conference.application.SocialPublisherLogger;
 import akka.haiku.gateway.application.QrCodeGenerator;
 import akka.haiku.gateway.application.TokenGroupEntity;
 import akka.haiku.generator.application.ImageGenerator;
@@ -13,7 +16,6 @@ import akka.javasdk.DependencyProvider;
 import akka.javasdk.ServiceSetup;
 import akka.javasdk.annotations.Setup;
 import akka.javasdk.client.ComponentClient;
-import akka.javasdk.http.HttpClient;
 import akka.javasdk.http.HttpClientProvider;
 import akka.javasdk.timer.TimerScheduler;
 import com.typesafe.config.Config;
@@ -29,8 +31,8 @@ public class Bootstrap implements ServiceSetup {
   private final ComponentClient componentClient;
   private final int tokenGroupSize;
   private final Config config;
-  private final HttpClient httpClient;
   private final TimerScheduler timerScheduler;
+  private final HttpClientProvider httpClientProvider;
 
   public Bootstrap(Config config,
                    ComponentClient componentClient,
@@ -38,10 +40,9 @@ public class Bootstrap implements ServiceSetup {
                    TimerScheduler timerScheduler
 
   ) {
-
-    this.httpClient = httpClientProvider.httpClientFor("https://dvbe25.cfp.dev");
     this.timerScheduler = timerScheduler;
     this.componentClient = componentClient;
+    this.httpClientProvider = httpClientProvider;
     this.config = config;
     this.tokenGroupSize = config.getInt("haiku.app.token-group-size");
 
@@ -60,8 +61,18 @@ public class Bootstrap implements ServiceSetup {
     var blobStorage = createBlobStorage();
     var imageGenerator = createImageGenerator(blobStorage);
     var qrCodeGenerator = new QrCodeGenerator(blobStorage, config);
-    var scanner = new ScheduleScanner(httpClient, timerScheduler, componentClient);
+    var scanner = new ScheduleScanner(httpClientProvider.httpClientFor("https://dvbe25.cfp.dev"), timerScheduler, componentClient);
 
+    SocialPublisher socialPublisher;
+    if (System.getenv("BSKY_USER") != null) {
+      socialPublisher = new SocialPublisherBlueSky(
+        httpClientProvider.httpClientFor("https://bsky.social"),
+        System.getenv("BSKY_USER"),
+        System.getenv("BSKY_PASSWORD")
+      );
+    } else {
+      socialPublisher = new SocialPublisherLogger();
+    }
     return new DependencyProvider() { // <3>
       @Override
       public <T> T getDependency(Class<T> clazz) {
@@ -71,6 +82,8 @@ public class Bootstrap implements ServiceSetup {
           return (T) imageGenerator;
         } else if (clazz == QrCodeGenerator.class) {
           return (T) qrCodeGenerator;
+        } else if (clazz == SocialPublisher.class) {
+          return (T) socialPublisher;
         } else {
           throw new RuntimeException("No such dependency found: " + clazz);
         }

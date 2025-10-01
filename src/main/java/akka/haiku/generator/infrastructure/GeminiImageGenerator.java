@@ -10,6 +10,8 @@ import com.google.gson.Gson;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Value;
 import com.google.protobuf.util.JsonFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Base64;
@@ -17,10 +19,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.slf4j.LoggerFactory.*;
+
 
 public class GeminiImageGenerator implements ImageGenerator {
 
   private final BlobStorage blobStorage;
+
+  private final Logger logger = getLogger(GeminiImageGenerator.class);
 
   public GeminiImageGenerator(BlobStorage blobStorage) {
     this.blobStorage = blobStorage;
@@ -35,8 +41,9 @@ public class GeminiImageGenerator implements ImageGenerator {
       String location = "us-central1";
       String prompt = "Create a image inspired by this Haiku (between [])." +
                 "[" + haiku + "]" +
-                "Do not include any kind of text in the image. " +
-                "The image should be in the style of a Japanese painting." +
+                "The image should be in the style of a Japanese painting using light tones." +
+                "If text is included in the image, it must strictly be part of the haiku. " +
+                "No other text should be included" +
                 "\n The Haiku itself was generated based on this input: \n" + userInput;
 
 
@@ -51,7 +58,7 @@ public class GeminiImageGenerator implements ImageGenerator {
 
         EndpointName endpointName =
           EndpointName.ofProjectLocationPublisherModelName(
-            projectId, location, "google", "imagen-3.0-generate-001");
+            projectId, location, "google", "imagen-4.0-generate-001");
 
         Map<String, Object> instancesMap = new HashMap<>();
         instancesMap.put("prompt", prompt);
@@ -63,8 +70,13 @@ public class GeminiImageGenerator implements ImageGenerator {
         // paramsMap.put("seed", 100);
         // paramsMap.put("addWatermark", false);
         paramsMap.put("aspectRatio", "1:1");
+        paramsMap.put("sampleImageSize", "1k");
         paramsMap.put("safetyFilterLevel", "block_some");
         paramsMap.put("personGeneration", "allow_adult");
+        paramsMap.put("mimeType", "image/jpeg");
+        paramsMap.put("compressionQuality", "60");
+        paramsMap.put("outputOptions.mimeType", "image/jpeg"); // Request JPEG output from the model
+        paramsMap.put("outputOptions.compressionQuality", "60");
         Value parameters = mapToValue(paramsMap);
 
         PredictResponse predictResponse =
@@ -79,7 +91,34 @@ public class GeminiImageGenerator implements ImageGenerator {
             String bytesBase64Encoded = fieldsMap.get("bytesBase64Encoded").getStringValue();
             byte[] imageBytes = Base64.getDecoder().decode(bytesBase64Encoded);
 
-            return blobStorage.uploadPng(imageBytes, "generated-images", "image-");
+            // Compress if over 900KB (downscale PNG, do not convert to JPEG)
+            final int MAX_SIZE = 900 * 1024;
+            byte[] uploadBytes = imageBytes;
+            if (uploadBytes.length > MAX_SIZE) {
+              logger.debug("generated file is larger than 900kb, downscaling it as PNG...");
+              java.awt.image.BufferedImage img = javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(imageBytes));
+              int width = img.getWidth();
+              int height = img.getHeight();
+              boolean fits = false;
+              while (uploadBytes.length > MAX_SIZE && width > 32 && height > 32) {
+                width = (int) (width * 0.9); // Reduce by 10%
+                height = (int) (height * 0.9);
+                java.awt.image.BufferedImage scaledImg = new java.awt.image.BufferedImage(width, height, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+                java.awt.Graphics2D g2d = scaledImg.createGraphics();
+                g2d.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                g2d.drawImage(img, 0, 0, width, height, null);
+                g2d.dispose();
+                java.io.ByteArrayOutputStream pngOut = new java.io.ByteArrayOutputStream();
+                javax.imageio.ImageIO.write(scaledImg, "png", pngOut);
+                uploadBytes = pngOut.toByteArray();
+                img = scaledImg;
+              }
+              if (uploadBytes.length > MAX_SIZE) {
+                logger.warn("Warning: Could not downscale PNG below 900KB. Uploading best effort.");
+              }
+            }
+            // Upload as PNG
+            return blobStorage.uploadPng(uploadBytes, "generated-images", "image-");
           } else {
             throw new RuntimeException("No image data found in the prediction response.");
           }
