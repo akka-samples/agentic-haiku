@@ -39,6 +39,9 @@ public class TokenGatewayEndpoint {
     }
   }
 
+  public record AddInputResponse(String haikuId) {
+  }
+
   public TokenGatewayEndpoint(ComponentClient componentClient) {
     this.componentClient = componentClient;
   }
@@ -95,12 +98,13 @@ public class TokenGatewayEndpoint {
         .method(TokenGroupEntity::tokenUsed)
         .invoke(request.token);
 
+      String haikuId = HaikuId.forToken(request.token).id();
       componentClient
-        .forWorkflow(HaikuId.forToken(request.token).id())
+        .forWorkflow(haikuId)
         .method(HaikuGenerationWorkflow::start)
         .invoke(request.input);
 
-      return HttpResponses.ok();
+      return HttpResponses.ok(new AddInputResponse(haikuId));
     } else {
       log.debug("Rejecting, invalid token provided");
       return HttpResponse.create().withStatus(UNAUTHORIZED);

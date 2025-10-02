@@ -59,6 +59,7 @@
                 this.haikuText = document.getElementById('haikuText');
                 this.imageContainer = document.getElementById('imageContainer');
                 this.haikuEventSource = null;
+                this.debugId = crypto.randomUUID();
                 this.progressLines = [];
 
                 this.initializeForm();
@@ -95,11 +96,12 @@
                 this.hideStatus();
 
                 try {
+                    console.log('DebugId: ' + this.debugId);
                     const response = await fetch('/gateway/inputs', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'akka-debug-id': '123'
+                            'akka-debug-id': this.debugId
                         },
                         body: JSON.stringify({ 
                             tokenGroupId: tokenGroupId,
@@ -110,6 +112,10 @@
 
                     if (response.ok) {
                         // Get the response data with haikuId
+                        const responseData = await response.json();
+                        console.log('Input submission response:', responseData);
+                        const haikuId = responseData.haikuId;
+
                         this.textInput.value = '';
                         this.showStatus('Input submitted successfully!', 'success');
 
@@ -117,7 +123,7 @@
                         this.inputSection.style.display = 'none';
 
                         // Display the haiku generation process
-                        this.displayHaikuGeneration(token);
+                        this.displayHaikuGeneration(haikuId);
 
                         // Show the haiku generation section
                         this.haikuDisplay.style.display = 'block';
