@@ -73,17 +73,16 @@
                         }
                     };
                     this.qrEventSource.onerror = (error) => {
-                        console.error('QR code EventSource error:', error);
-                        this.showQrError();
+                        console.log('QR code connection lost - attempting to reconnect...', error);
                         setTimeout(() => {
                             if (this.qrEventSource.readyState === EventSource.CLOSED) {
+                                console.log('Reconnecting to QR code stream...');
                                 this.initializeQrStream();
                             }
                         }, 5000);
                     };
                 } catch (error) {
                     console.error('Failed to initialize QR code EventSource:', error);
-                    this.showQrError();
                 }
             }
             handleQrCode(qrCode) {
@@ -93,13 +92,6 @@
                         <a href="${this.escapeHtml('/gateway/' + qrCode.tokenGroupId)}" target="_blank" rel="noopener" class="qr-link">
                             <img src="${this.escapeHtml(qrCode.qrCodeUrl)}" alt="QR Code" class="qr-image" />
                         </a>
-                    </div>
-                `;
-            }
-            showQrError() {
-                this.qrContainer.innerHTML = `
-                    <div class="no-qr error">
-                        ❌ Failed to load QR code - attempting to reconnect...
                     </div>
                 `;
             }

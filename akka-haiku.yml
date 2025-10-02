@@ -1,4 +1,4 @@
-name: akka-haiku
+name: agentic-haiku
 service:
   volumeMounts:
   - mountPath: /google-application-credentials-path
@@ -16,8 +16,8 @@ service:
   - name: GOOGLE_APPLICATION_CREDENTIALS
     value: /google-application-credentials-path/credentials.json
   - name: HAIKU_APP_URL
-    value: https://lively-credit-2188.gcp-us-east1.apps.akka.st
-  image: docker.io/aludwiko/akka-haiku:1.0-SNAPSHOT-20250929082238
+    value: https://dry-haze-9885.gcp-us-east1.akka.services
+  image: kcr.us-east-1.kalix.io/lightbend-eng/devoxx-be/akka-haiku:1.0-SNAPSHOT-20251002125739
   resources:
     runtime:
       mode: embedded
