@@ -151,6 +151,9 @@
         </div>
         <div class="topline"></div>
         <div style="padding: 20px;">
+            <label style="display: flex; align-items: center; margin-bottom: 12px; font-size: 16px;">
+                <input type="checkbox" id="hideTokenToggle" style="margin-right: 8px;" /> Show only talk Haikus
+            </label>
             <div id="error" class="error" style="display: none;"></div>
             <table class="posts-table" id="postsTable" style="display: none;">
                 <thead>
@@ -187,8 +190,10 @@
             this.posts = [];
             this.postsById = {};
             this.sse = null;
+            this.hideTokenPosts = false;
             this.loadPosts();
             this.setupModal();
+            this.setupToggle();
         }
         loadPosts() {
             const errorDiv = document.getElementById('error');
@@ -221,8 +226,19 @@
                     } else {
                         throw new Error('Unexpected posts format');
                     }
+                    // Convert scheduleTime from ISO string to millis if needed
+                    Object.values(this.postsById).forEach(post => {
+                        if (post.scheduleTime && typeof post.scheduleTime === 'string') {
+                            const millis = Date.parse(post.scheduleTime);
+                            post._scheduleTimeMillis = isNaN(millis) ? 0 : millis;
+                        } else if (typeof post.scheduleTime === 'number') {
+                            post._scheduleTimeMillis = post.scheduleTime;
+                        } else {
+                            post._scheduleTimeMillis = 0;
+                        }
+                    });
                     // Update posts array from map and sort by scheduleTime ascending
-                    this.posts = Object.values(this.postsById).sort((a, b) => (a.scheduleTime || 0) - (b.scheduleTime || 0));
+                    this.posts = Object.values(this.postsById).sort((a, b) => (a._scheduleTimeMillis || 0) - (b._scheduleTimeMillis || 0));
                     this.renderPosts();
                     table.style.display = this.posts.length > 0 ? 'table' : 'none';
                 } catch (e) {
@@ -237,13 +253,25 @@
                 table.style.display = 'none';
             };
         }
+        setupToggle() {
+            const toggle = document.getElementById('hideTokenToggle');
+            toggle.checked = this.hideTokenPosts;
+            toggle.addEventListener('change', () => {
+                this.hideTokenPosts = toggle.checked;
+                this.renderPosts();
+            });
+        }
         renderPosts() {
             const tbody = document.getElementById('postsTableBody');
             tbody.innerHTML = '';
-            if (this.posts.length === 0) {
+            let postsToShow = this.posts;
+            if (this.hideTokenPosts) {
+                postsToShow = postsToShow.filter(post => !(post.id && post.id.startsWith('token:')));
+            }
+            if (postsToShow.length === 0) {
                 return;
             }
-            this.posts.forEach(post => {
+            postsToShow.forEach(post => {
                 const row = this.createPostRow(post);
                 tbody.appendChild(row);
             });
@@ -281,6 +309,9 @@
                 <button class="regen-btn" onclick="event.stopPropagation();postsManager.regeneratePostByIdAndTalkId('${post.id}')" ${!post.id || hideRegenerate ? 'style=\'display:none\'' : ''} ${!post.id ? 'disabled' : ''}>Regenerate</button>
                 <button class="approve-btn" onclick="event.stopPropagation();postsManager.approvePost('${post.id}')" ${!post.id ? 'disabled' : ''}>Approve</button>
                 <button class="reject-btn" onclick="event.stopPropagation();postsManager.rejectPost(event, '${post.id}')" ${!post.id ? 'disabled' : ''}>Reject</button>
+                <div class="post-date" style="margin-top:8px;font-size:12px;color:#bdc3c7;">
+                  ${this.formatScheduleTime(post)}
+                </div>
             `;
             row.appendChild(idCell);
             row.appendChild(postCell);
@@ -393,6 +424,24 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+        // Add a helper to format the scheduleTime in the user's local time zone
+        formatScheduleTime(post) {
+            let millis = post._scheduleTimeMillis;
+            if (!millis && post.scheduleTime && typeof post.scheduleTime === 'string') {
+                millis = Date.parse(post.scheduleTime);
+            }
+            if (!millis || isNaN(millis)) return '';
+            const d = new Date(millis);
+            // Format as YYYY-MM-DD HH:mm (local TZ abbreviation)
+            const year = d.getFullYear();
+            const month = String(d.getMonth()+1).padStart(2,'0');
+            const day = String(d.getDate()).padStart(2,'0');
+            const hour = String(d.getHours()).padStart(2,'0');
+            const min = String(d.getMinutes()).padStart(2,'0');
+            // Get local time zone abbreviation
+            const tz = d.toLocaleTimeString(undefined, { timeZoneName: 'short' }).split(' ').pop();
+            return `${year}-${month}-${day} ${hour}:${min} ${tz}`;
         }
     }
     let postsManager;
