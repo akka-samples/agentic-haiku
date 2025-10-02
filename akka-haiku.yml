@@ -11,8 +11,8 @@ service:
   - name: GOOGLE_AI_GEMINI_API_KEY
     valueFrom:
       secretKeyRef:
-        key: api-key
         name: google-gemini
+        key: api-key
   - name: GOOGLE_APPLICATION_CREDENTIALS
     value: /google-application-credentials-path/credentials.json
   - name: HAIKU_APP_URL
@@ -20,14 +20,14 @@ service:
   - name: BSKY_USER
     valueFrom:
       secretKeyRef:
-        key: bluesky
-        name: username
+        name: bluesky
+        key: username
   - name: BSKY_PASSWORD
     valueFrom:
       secretKeyRef:
-        key: bluesky
-        name: pwd
-  image: kcr.us-east-1.kalix.io/lightbend-eng/devoxx-be/akka-haiku:1.0-SNAPSHOT-20251002125739
+        name: bluesky
+        key: pwd
+  image: kcr.us-east-1.kalix.io/lightbend-eng/devoxx-be/akka-haiku:1.0-SNAPSHOT-20251002162234
   resources:
     runtime:
       mode: embedded
