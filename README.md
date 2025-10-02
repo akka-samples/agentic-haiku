@@ -13,3 +13,4 @@ Then start your service locally, with tracing enabled and reporting to the local
 ```shell
 TRACING_ENABLED=true COLLECTOR_ENDPOINT="http://localhost:4317" mvn compile exec:java
 ```
+
