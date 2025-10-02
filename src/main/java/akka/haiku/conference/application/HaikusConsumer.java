@@ -96,8 +96,6 @@ public class HaikusConsumer extends Consumer {
       var timeslot = proposal.get().timeSlots().getFirst();
       ZoneId belgiumZone = ZoneId.of(timeslot.timezone());
       ZonedDateTime belgiumTime = timeslot.fromDate().atZone(belgiumZone);
-
-      var now = Instant.now().truncatedTo(ChronoUnit.MINUTES);
       return belgiumTime.toInstant().minus(Duration.ofMinutes(45));
 
     } else {

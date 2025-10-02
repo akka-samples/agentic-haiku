@@ -66,6 +66,7 @@ public class Bootstrap implements ServiceSetup {
     SocialPublisher socialPublisher;
     if (System.getenv("BSKY_USER") != null) {
       socialPublisher = new SocialPublisherBlueSky(
+        config,
         httpClientProvider.httpClientFor("https://bsky.social"),
         System.getenv("BSKY_USER"),
         System.getenv("BSKY_PASSWORD")

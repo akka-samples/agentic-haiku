@@ -2,6 +2,7 @@ package akka.haiku.conference.application;
 
 import akka.http.javadsl.model.ContentTypes;
 import akka.javasdk.http.HttpClient;
+import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,11 +10,13 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class SocialPublisherBlueSky implements SocialPublisher {
   private static final Logger log = LoggerFactory.getLogger(SocialPublisherBlueSky.class);
 
 
+  private final Config config;
   private final HttpClient httpClient;
   private final String identifier;
   private final String password;
@@ -21,7 +24,8 @@ public class SocialPublisherBlueSky implements SocialPublisher {
   record Session(String accessJwt, String did) {
   }
 
-  public SocialPublisherBlueSky(HttpClient httpClient, String identifier, String password) {
+  public SocialPublisherBlueSky(Config config, HttpClient httpClient, String identifier, String password) {
+    this.config = config;
     this.httpClient = httpClient;
     this.identifier = identifier;
     this.password = password;
@@ -31,42 +35,53 @@ public class SocialPublisherBlueSky implements SocialPublisher {
     public void publish(String message, String imageUrl, List<String> tags, List<String> handlers) {
         try {
           var sess = initiateSession();
-
-          StringBuilder post = new StringBuilder(message);
+          StringBuilder post = new StringBuilder();
 
           // Prepare facets for mentions and tags
           List<Map<String, Object>> facets = new java.util.ArrayList<>();
 
           // Add mentions to post and facets
-          // only mentions when posting from official account
-            if (identifier.equals("akka.io")) {
-              if (handlers != null && !handlers.isEmpty()) {
-                post.append("\n");
-                for (String handler : handlers) {
-                  if (handler != null && !handler.isBlank()) {
-                    String cleanHandle = handler.replace("@", "").trim();
-                    // Resolve handle to DID (if not already a DID)
-                    String did = cleanHandle.startsWith("did:") ? cleanHandle : resolveDidForHandle(cleanHandle);
-                    if (did != null && !did.isBlank()) {
-                      String mentionText = "@" + cleanHandle;
-                      post.append(" ").append(mentionText);
-                      int start = post.length() - mentionText.length();
-                      int end = post.length();
-                      Map<String, Object> index = new HashMap<>();
-                      index.put("byteStart", start);
-                      index.put("byteEnd", end);
-                      Map<String, Object> feature = new HashMap<>();
-                      feature.put("$type", "app.bsky.richtext.facet#mention");
-                      feature.put("did", did);
-                      Map<String, Object> facet = new HashMap<>();
-                      facet.put("index", index);
-                      facet.put("features", List.of(feature));
-                      facets.add(facet);
-                    }
+          if (handlers != null && !handlers.isEmpty()) {
+
+            var separator = ", ";
+            for (String handler : handlers) {
+              if (handler != null && !handler.isBlank()) {
+                String cleanHandle = handler.replace("@", "").trim();
+                // Resolve handle to DID (if not already a DID)
+                String did = cleanHandle.startsWith("did:") ? cleanHandle : resolveDidForHandle(cleanHandle);
+                if (did != null && !did.isBlank()) {
+                  String mentionText = "@" + cleanHandle;
+                  post
+                    .append(mentionText)
+                    .append(separator);
+
+                  int start = post.length() - mentionText.length();
+                  int end = post.length();
+                  Map<String, Object> index = new HashMap<>();
+                  index.put("byteStart", start);
+                  index.put("byteEnd", end);
+                  Map<String, Object> feature = new HashMap<>();
+                  feature.put("$type", "app.bsky.richtext.facet#mention");
+                  feature.put("did", did);
+                  Map<String, Object> facet = new HashMap<>();
+                  facet.put("index", index);
+                  facet.put("features", List.of(feature));
+                  facets.add(facet);
                 }
-              }
+
+                // after the comma separeted handlers, we add the message
+                var messages = config.getStringList("haiku.best-wishes");
+                int randomIndex = new Random().nextInt(messages.size());
+                post.append(messages.get(randomIndex));
+                post.append("\n");
             }
+
+            // two lines to clearly separate it from the haiku
+            post.append("\n\n");
           }
+        }
+
+          post.append(message);
 
           // Append tags as hashtags, ensuring correct formatting and collect facets
           if (tags != null && !tags.isEmpty()) {
