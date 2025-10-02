@@ -32,6 +32,12 @@ public class StaticResourcesEndpoint {
     return HttpResponses.staticResource("audit.html");
   }
 
+
+  @Get("/posts-queue")
+  public HttpResponse posts() {
+    return HttpResponses.staticResource("posts.html");
+  }
+
   @Get("/static/**") 
   public HttpResponse staticResources(HttpRequest request) { 
     return HttpResponses.staticResource(request, "/static/"); 

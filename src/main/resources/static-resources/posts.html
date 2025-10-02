@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Posts - Agentic Haiku</title>
+    <link rel="stylesheet" href="static/style.css">
+    <style>
+        .posts-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #1a1c1f;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .posts-table th,
+        .posts-table td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid #2a2d31;
+        }
+        .posts-table th {
+            background: #2a2d31;
+            font-weight: 600;
+            color: #f5f6fa;
+        }
+        .posts-table tbody tr:hover {
+            background: #252830;
+        }
+        .reject-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .reject-btn:hover {
+            background: #c0392b;
+        }
+        .reject-btn:disabled {
+            background: #7f8c8d;
+            cursor: not-allowed;
+        }
+        .view-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .view-btn:hover {
+            background: #2980b9;
+        }
+        .approve-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .approve-btn:hover {
+            background: #1e8449;
+        }
+        .post-date {
+            color: #bdc3c7;
+            font-size: 14px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #bdc3c7;
+        }
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #e74c3c;
+        }
+        .refresh-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        .refresh-btn:hover {
+            background: #2980b9;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+        }
+        .modal-content {
+            background: #181a1b;
+            color: #f5f6fa;
+            margin: 5% auto;
+            padding: 2em;
+            border: 1px solid #444;
+            width: 100%;
+            max-width: 600px;
+            max-height: 80vh;
+            position: relative;
+            border-radius: 8px;
+            overflow-y: auto;
+        }
+        .close {
+            position: absolute;
+            right: 1em;
+            top: 1em;
+            font-size: 2em;
+            color: #333;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: #888;
+        }
+        .modal-actions {
+            margin-top: 1.5em;
+            text-align: right;
+        }
+        .modal-actions button {
+            margin-left: 0.5em;
+        }
+        .posts-table tbody tr {
+            cursor: pointer;
+        }
+        .posts-table tbody tr td button {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="banner-header">
+            Posts - Agentic Haiku
+        </div>
+        <div class="topline"></div>
+        <div style="padding: 20px;">
+            <button class="refresh-btn" onclick="loadPosts()">Refresh Posts</button>
+            <div id="loading" class="loading">Loading posts...</div>
+            <div id="error" class="error" style="display: none;"></div>
+            <table class="posts-table" id="postsTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Post</th>
+                        <th>URL</th>
+                        <th>Tags</th>
+                        <th>X Handlers</th>
+                        <th>Bluesky Handlers</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="postsTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- Post Modal -->
+    <div id="postModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <div id="modalBody"></div>
+            <div class="modal-actions">
+                <button class="approve-btn" id="modalApprove">Approve</button>
+                <button class="view-btn" id="modalRegenerate">Regenerate</button>
+                <button class="reject-btn" id="modalDelete">Reject</button>
+            </div>
+        </div>
+    </div>
+    <script>
+    class PostsManager {
+        constructor() {
+            this.posts = [];
+            this.postsById = {};
+            this.sse = null;
+            this.loadPosts();
+            this.setupModal();
+        }
+        loadPosts() {
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const table = document.getElementById('postsTable');
+            loadingDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
+            table.style.display = 'none';
+            // Use SSE for live updates
+            if (this.sse) this.sse.close();
+            this.sse = new EventSource('/posts');
+            this.sse.onmessage = (event) => {
+                try {
+                    if (!event.data || !event.data.trim()) return; // Ignore empty/whitespace events
+                    console.log('SSE /posts event.data:', event.data); // Debug log
+                    const parsed = JSON.parse(event.data);
+                    // If the event is a single post object, add/update it
+                    if (parsed && typeof parsed === 'object' && parsed.id) {
+                        this.postsById[parsed.id] = parsed;
+                    } else if (Array.isArray(parsed)) {
+                        // If the event is an array, replace all
+                        parsed.forEach(post => {
+                            if (post && post.id) this.postsById[post.id] = post;
+                        });
+                    } else if (parsed && Array.isArray(parsed.items)) {
+                        parsed.items.forEach(post => {
+                            if (post && post.id) this.postsById[post.id] = post;
+                        });
+                    } else {
+                        throw new Error('Unexpected posts format');
+                    }
+                    // Update posts array from map
+                    this.posts = Object.values(this.postsById);
+                    this.renderPosts();
+                    loadingDiv.style.display = 'none';
+                    table.style.display = 'table';
+                } catch (e) {
+                    loadingDiv.style.display = 'none';
+                    errorDiv.textContent = 'Failed to parse posts: ' + e.message;
+                    errorDiv.style.display = 'block';
+                }
+            };
+            this.sse.onerror = () => {
+                loadingDiv.style.display = 'none';
+                errorDiv.textContent = 'Failed to load posts (SSE error).';
+                errorDiv.style.display = 'block';
+            };
+        }
+        renderPosts() {
+            const tbody = document.getElementById('postsTableBody');
+            tbody.innerHTML = '';
+            if (this.posts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #7f8c8d;">No posts found</td></tr>';
+                return;
+            }
+            this.posts.forEach(post => {
+                const row = this.createPostRow(post);
+                tbody.appendChild(row);
+            });
+        }
+        createPostRow(post) {
+            const row = document.createElement('tr');
+            // Make row clickable to open modal, but ignore clicks on action buttons
+            row.onclick = (e) => {
+                if (e.target.tagName === 'BUTTON') return;
+                this.viewPost(post.id);
+            };
+            // ID
+            const idCell = document.createElement('td');
+            idCell.innerHTML = `<div class="post-id">${this.escapeHtml(post.id || '-')}` + '</div>';
+            // Post (render with <pre> for line breaks)
+            const postCell = document.createElement('td');
+            postCell.innerHTML = `<pre class="post-text" style="white-space: pre-wrap; background: none; color: inherit; border: none; margin: 0; padding: 0; font-family: inherit;">${this.escapeHtml(post.post || '-')}</pre>`;
+            // URL as image
+            const urlCell = document.createElement('td');
+            urlCell.innerHTML = post.url ? `<img src="${this.escapeHtml(post.url)}" alt="post image" style="max-width:80px;max-height:80px;border-radius:4px;box-shadow:0 2px 8px #000;">` : '<span style="color:#7f8c8d;font-style:italic;">No image</span>';
+            // Tags
+            const tagsCell = document.createElement('td');
+            tagsCell.innerHTML = post.tags && post.tags.length ? this.escapeHtml(post.tags.join(', ')) : '<span style="color:#7f8c8d;font-style:italic;">-</span>';
+            // X Handlers
+            const xHandlersCell = document.createElement('td');
+            xHandlersCell.innerHTML = post.xHandlers && post.xHandlers.length ? this.escapeHtml(post.xHandlers.join(', ')) : '<span style="color:#7f8c8d;font-style:italic;">-</span>';
+            // Bluesky Handlers
+            const bskyHandlersCell = document.createElement('td');
+            bskyHandlersCell.innerHTML = post.bskyHandlers && post.bskyHandlers.length ? this.escapeHtml(post.bskyHandlers.join(', ')) : '<span style="color:#7f8c8d;font-style:italic;">-</span>';
+            // Actions
+            const actionsCell = document.createElement('td');
+            actionsCell.innerHTML = `
+                <button class="approve-btn" onclick="event.stopPropagation();postsManager.approvePost('${post.id}')" ${!post.id ? 'disabled' : ''}>Approve</button>
+                <button class="view-btn" onclick="event.stopPropagation();postsManager.regeneratePostByIdAndTalkId('${post.id}')" ${!post.id ? 'disabled' : ''}>Regenerate</button>
+                <button class="reject-btn" onclick="event.stopPropagation();postsManager.rejectPost(event, '${post.id}')" ${!post.id ? 'disabled' : ''}>Reject</button>
+            `;
+            row.appendChild(idCell);
+            row.appendChild(postCell);
+            row.appendChild(urlCell);
+            row.appendChild(tagsCell);
+            row.appendChild(xHandlersCell);
+            row.appendChild(bskyHandlersCell);
+            row.appendChild(actionsCell);
+            return row;
+        }
+        viewPost(postId) {
+            const post = this.postsById[postId];
+            if (!post) return;
+            this.currentPost = post;
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = `
+                <h2>Post Details</h2>
+                <p><strong>ID:</strong> ${this.escapeHtml(post.id)}</p>
+                <p><strong>Post:</strong></p>
+                <pre style="white-space: pre-wrap; background: none; color: inherit; border: none; margin: 0; padding: 0; font-family: inherit;">${this.escapeHtml(post.post)}</pre>
+                <p><strong>Image:</strong><br>
+                ${post.url ? `<img src="${this.escapeHtml(post.url)}" alt="post image" style="max-width:100%;max-height:40vh;border-radius:6px;box-shadow:0 2px 8px #000;">` : '<span style="color:#7f8c8d;font-style:italic;">No image</span>'}
+                </p>
+                <p><strong>Tags:</strong> ${post.tags && post.tags.length ? this.escapeHtml(post.tags.join(', ')) : '-'}</p>
+                <p><strong>X Handlers:</strong> ${post.xHandlers && post.xHandlers.length ? this.escapeHtml(post.xHandlers.join(', ')) : '-'}</p>
+                <p><strong>Bluesky Handlers:</strong> ${post.bskyHandlers && post.bskyHandlers.length ? this.escapeHtml(post.bskyHandlers.join(', ')) : '-'}</p>
+            `;
+            document.getElementById('postModal').style.display = 'block';
+            // Enable/disable Regenerate button in modal
+            const regenBtn = document.getElementById('modalRegenerate');
+            regenBtn.disabled = !post.id;
+        }
+        regeneratePostByIdAndTalkId(postId) {
+            if (!postId) {
+                alert('Missing postId for regeneration.');
+                return;
+            }
+            fetch(`/posts/${postId}/reject`, { method: 'POST' })
+                .then(r => {
+                    if (!r.ok) throw new Error('Rejection failed');
+                    return fetch(`/schedule/now/${postId}`, { method: 'POST' });
+                })
+                .then(r => {
+                    if (!r.ok) throw new Error('Schedule now failed');
+                    window.location.reload();
+                })
+                .catch(e => alert(e));
+        }
+        setupModal() {
+            const modal = document.getElementById('postModal');
+            const closeBtn = document.getElementById('closeModal');
+            closeBtn.onclick = () => {
+                modal.style.display = 'none';
+                this.currentPost = null;
+            };
+            window.onclick = (event) => {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                    this.currentPost = null;
+                }
+            };
+            document.getElementById('modalApprove').onclick = () => {
+                if (!this.currentPost) return;
+                this.approvePost(this.currentPost.id);
+            };
+            document.getElementById('modalRegenerate').onclick = () => {
+                if (!this.currentPost || !this.currentPost.id) {
+                    alert('No postId available for this post.');
+                    return;
+                }
+                this.regeneratePostByIdAndTalkId(this.currentPost.id);
+            };
+            document.getElementById('modalDelete').onclick = (event) => {
+                event.stopPropagation();
+                if (!this.currentPost) return;
+                this.rejectPost(event, this.currentPost.id);
+            };
+        }
+
+        approvePost(postId) {
+            if (!postId) return;
+            fetch(`/posts/${postId}/approve`, { method: 'POST' })
+                .then(r => {
+                    if (!r.ok) throw new Error('Approve failed');
+                    window.location.reload();
+                })
+                .catch(e => alert(e));
+        }
+        rejectPost(event, postId) {
+            if (event) event.stopPropagation();
+            if (!postId) {
+                alert('Cannot reject post: No ID available');
+                return;
+            }
+
+            fetch(`/posts/${postId}/reject`, { method: 'POST' })
+                .then(r => {
+                    if (!r.ok) throw new Error('Reject failed');
+                    window.location.reload();
+                })
+                .catch(e => alert(e));
+        }
+        escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    }
+    let postsManager;
+    document.addEventListener('DOMContentLoaded', () => {
+        postsManager = new PostsManager();
+    });
+    function loadPosts() {
+        postsManager.loadPosts();
+    }
+    </script>
+</body>
+</html>

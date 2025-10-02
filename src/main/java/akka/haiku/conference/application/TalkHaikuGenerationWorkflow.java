@@ -2,6 +2,7 @@ package akka.haiku.conference.application;
 
 import akka.Done;
 import akka.haiku.generator.application.HaikuGenerationWorkflow;
+import akka.haiku.generator.domain.HaikuId;
 import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.http.HttpClient;
@@ -12,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
+
+import static java.time.Duration.ofSeconds;
 
 @ComponentId("run-content-generation-for-talk")
 public class TalkHaikuGenerationWorkflow extends Workflow<TalkHaikuGenerationWorkflow.State> {
@@ -44,6 +47,7 @@ public class TalkHaikuGenerationWorkflow extends Workflow<TalkHaikuGenerationWor
   @Override
   public WorkflowSettings settings() {
     return WorkflowSettings.builder()
+      .defaultStepTimeout(ofSeconds(20))
       .defaultStepRecovery(maxRetries(3).failoverTo(TalkHaikuGenerationWorkflow::abort))
       .build();
   }
@@ -91,7 +95,7 @@ public class TalkHaikuGenerationWorkflow extends Workflow<TalkHaikuGenerationWor
     // each haiku generation ID is composed by talk id + a random
     // later, when the Haiku is ready, we will extract the ID and send the Haiku to the speakers
     this.componentClient
-      .forWorkflow(talkId + ":" + UUID.randomUUID().toString())
+      .forWorkflow(HaikuId.forTalk(talkId).id())
       .method(HaikuGenerationWorkflow::start)
       .invoke(words);
 

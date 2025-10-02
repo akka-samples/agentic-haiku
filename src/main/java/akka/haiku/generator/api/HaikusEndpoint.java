@@ -1,13 +1,12 @@
 package akka.haiku.generator.api;
 
-import akka.haiku.generator.application.HaikuGenerationWorkflow;
 import akka.haiku.generator.application.GenerationProgressView;
+import akka.haiku.generator.application.HaikuGenerationWorkflow;
 import akka.haiku.generator.application.HaikuView;
 import akka.http.javadsl.model.HttpResponse;
 import akka.javasdk.annotations.Acl;
 import akka.javasdk.annotations.http.Get;
 import akka.javasdk.annotations.http.HttpEndpoint;
-import akka.javasdk.annotations.http.Put;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.http.HttpResponses;
 import akka.stream.Materializer;

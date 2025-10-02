@@ -1,6 +1,7 @@
 services:
   postgres-db:
     image: postgres:17
+    container_name: haiku-postgres
     ports:
       - 5432:5432
     environment:
@@ -14,6 +15,7 @@ services:
       timeout: 5s
   jaeger:
     image: jaegertracing/all-in-one:1.54
+    container_name: haiku-jaeger
     ports:
       - 4317:4317
       - 16686:16686

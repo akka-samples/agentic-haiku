@@ -1,14 +1,14 @@
 package akka.haiku.generator.application;
 
+import akka.haiku.generator.domain.Haiku;
+import akka.haiku.generator.domain.HaikuGeneration;
+import akka.haiku.generator.domain.Image;
 import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.annotations.Consume;
 import akka.javasdk.annotations.DeleteHandler;
 import akka.javasdk.annotations.Query;
 import akka.javasdk.view.TableUpdater;
 import akka.javasdk.view.View;
-import akka.haiku.generator.domain.HaikuGeneration;
-import akka.haiku.generator.domain.Haiku;
-import akka.haiku.generator.domain.Image;
 
 import java.util.List;
 import java.util.Optional;

@@ -2,6 +2,7 @@ package akka.haiku.gateway.api;
 
 import akka.haiku.gateway.application.TokenGroupEntity;
 import akka.haiku.generator.application.HaikuGenerationWorkflow;
+import akka.haiku.generator.domain.HaikuId;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.model.headers.HttpCookie;
@@ -95,7 +96,7 @@ public class TokenGatewayEndpoint {
         .invoke(request.token);
 
       componentClient
-        .forWorkflow(request.token)
+        .forWorkflow(HaikuId.forToken(request.token).id())
         .method(HaikuGenerationWorkflow::start)
         .invoke(request.input);
 

@@ -76,6 +76,7 @@ public class ScheduleScanner {
 
 
   public void scheduleNow(int proposalId) {
+    log.info("Generating Haiku for {}", proposalId);
     componentClient.forWorkflow(String.valueOf(proposalId))
       .method(TalkHaikuGenerationWorkflow::start)
       .invoke();
