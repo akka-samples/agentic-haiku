@@ -5,6 +5,8 @@ import akka.haiku.generator.application.HaikuGenerationWorkflow;
 import akka.haiku.generator.domain.HaikuId;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCodes;
+import akka.http.javadsl.model.headers.CacheControl;
+import akka.http.javadsl.model.headers.CacheDirectives;
 import akka.http.javadsl.model.headers.HttpCookie;
 import akka.http.javadsl.model.headers.Location;
 import akka.http.javadsl.model.headers.SetCookie;
@@ -56,12 +58,14 @@ public class TokenGatewayEndpoint {
       return HttpResponse.create()
         .withStatus(StatusCodes.FOUND)
         .addHeader(Location.create("/form"))
+        .addHeader(CacheControl.create(CacheDirectives.NO_CACHE, CacheDirectives.MUST_REVALIDATE))
         .addHeader(SetCookie.create(HttpCookie.create("token", token).withPath("/")))
         .addHeader(SetCookie.create(HttpCookie.create("tokenGroupId", tokenGroupId).withPath("/")));
     } catch (CommandException e) {
       log.error(e.getMessage(), e);
       return HttpResponse.create()
         .withStatus(StatusCodes.FOUND)
+        .addHeader(CacheControl.create(CacheDirectives.NO_CACHE, CacheDirectives.MUST_REVALIDATE))
         .addHeader(Location.create("/scan-qr-code"));
     }
   }

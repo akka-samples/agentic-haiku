@@ -94,9 +94,10 @@ public class Bootstrap implements ServiceSetup {
   private BlobStorage createBlobStorage() {
     var googleApplicationCredentials = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
     if (googleApplicationCredentials == null || googleApplicationCredentials.isEmpty()) {
-      log.debug("Using LocalStorage for blobs");
+      log.info("Using LocalStorage for blobs");
       return new LocalStorage();
     } else {
+      log.info("Using GCPBlobStorage for blobs");
       return new GCPBlobStorage();
     }
   }
@@ -104,9 +105,10 @@ public class Bootstrap implements ServiceSetup {
   private ImageGenerator createImageGenerator(BlobStorage blobStorage) {
     var googleApplicationCredentials = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
     if (googleApplicationCredentials == null || googleApplicationCredentials.isEmpty()) {
-      log.debug("Using FixedImageGenerator for images");
+      log.info("Using FixedImageGenerator for images");
       return new FixedImageGenerator();
     } else {
+      log.info("Using GCPFixedImageGenerator for images");
       return new GeminiImageGenerator(blobStorage);
     }
   }

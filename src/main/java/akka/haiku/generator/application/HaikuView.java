@@ -13,7 +13,7 @@ import akka.javasdk.view.View;
 import java.util.List;
 import java.util.Optional;
 
-@ComponentId("generated-image-view-2")
+@ComponentId("haiku-view")
 public class HaikuView extends View {
 
 

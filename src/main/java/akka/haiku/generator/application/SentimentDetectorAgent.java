@@ -30,17 +30,18 @@ public class SentimentDetectorAgent extends Agent {
       // we don't want to save any content before we are able to decide if it's harmful or not
       .memory(MemoryProvider.none())
       .userMessage(input.originalInput())
-      .map( res -> {
-        UserInput.Eval eval;
-        log.debug("sentiment analysis result is '{}'", res);
-        try {
-          eval = UserInput.Eval.valueOf(res);
-        } catch (IllegalArgumentException e) {
-          eval = UserInput.Eval.UNKNOWN;
-        }
-        return input.evaluatedAs(eval);
-      })
+      .map( res -> evaluatedAs(input, res))
       .thenReply();
+  }
+
+  private UserInput evaluatedAs(UserInput input, String response) {
+    log.debug("evaluation result is '{}'", response);
+    try {
+      var eval = UserInput.Eval.valueOf(response);
+      return input.evaluatedAs(eval);
+    } catch (IllegalArgumentException e) {
+      return input.evaluatedAs(UserInput.Eval.UNKNOWN);
+    }
   }
 
 }
