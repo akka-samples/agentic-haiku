@@ -34,25 +34,76 @@ public class SocialPublisherBlueSky implements SocialPublisher {
 
           StringBuilder post = new StringBuilder(message);
 
-          // only tag or add mentions when posting from official account
-          if (identifier.equals("akka.io")) {
-            if (tags != null && !tags.isEmpty()) {
-              for (String tag : tags) {
-                post.append(" #").append(tag.replace("#", ""));
-              }
-            }
-            if (handlers != null && !handlers.isEmpty()) {
-              for (String handler : handlers) {
-                post.append(" @").append(handler.replace("@", ""));
+          // Prepare facets for mentions and tags
+          List<Map<String, Object>> facets = new java.util.ArrayList<>();
+
+          // Add mentions to post and facets
+          // only mentions when posting from official account
+            if (identifier.equals("akka.io")) {
+              if (handlers != null && !handlers.isEmpty()) {
+                post.append("\n");
+                for (String handler : handlers) {
+                  if (handler != null && !handler.isBlank()) {
+                    String cleanHandle = handler.replace("@", "").trim();
+                    // Resolve handle to DID (if not already a DID)
+                    String did = cleanHandle.startsWith("did:") ? cleanHandle : resolveDidForHandle(cleanHandle);
+                    if (did != null && !did.isBlank()) {
+                      String mentionText = "@" + cleanHandle;
+                      post.append(" ").append(mentionText);
+                      int start = post.length() - mentionText.length();
+                      int end = post.length();
+                      Map<String, Object> index = new HashMap<>();
+                      index.put("byteStart", start);
+                      index.put("byteEnd", end);
+                      Map<String, Object> feature = new HashMap<>();
+                      feature.put("$type", "app.bsky.richtext.facet#mention");
+                      feature.put("did", did);
+                      Map<String, Object> facet = new HashMap<>();
+                      facet.put("index", index);
+                      facet.put("features", List.of(feature));
+                      facets.add(facet);
+                    }
+                }
               }
             }
           }
+
+          // Append tags as hashtags, ensuring correct formatting and collect facets
+          if (tags != null && !tags.isEmpty()) {
+            post.append("\n");
+            for (String tag : tags) {
+              if (tag != null && !tag.isBlank()) {
+                String cleanTag = tag.trim().replace("#", "").replaceAll("[^A-Za-z0-9_]+", "");
+                if (!cleanTag.isEmpty()) {
+                  String hashtag = "#" + cleanTag;
+                  post.append(" ").append(hashtag);
+                  int start = post.length() - hashtag.length();
+                  int end = post.length();
+                  Map<String, Object> index = new HashMap<>();
+                  index.put("byteStart", start);
+                  index.put("byteEnd", end);
+                  Map<String, Object> feature = new HashMap<>();
+                  feature.put("$type", "app.bsky.richtext.facet#tag");
+                  feature.put("tag", cleanTag);
+                  Map<String, Object> facet = new HashMap<>();
+                  facet.put("index", index);
+                  facet.put("features", List.of(feature));
+                  facets.add(facet);
+                }
+              }
+            }
+          }
+
+          log.debug("BlueSky post text: {}", post.toString());
 
           String now = Instant.now().toString();
           Map<String, Object> record = new HashMap<>();
           record.put("$type", "app.bsky.feed.post");
           record.put("text", post.toString());
           record.put("createdAt", now);
+          if (!facets.isEmpty()) {
+            record.put("facets", facets);
+          }
 
           // Image upload logic
           if (imageUrl != null && !imageUrl.isEmpty()) {
@@ -145,6 +196,27 @@ public class SocialPublisherBlueSky implements SocialPublisher {
       return new Session(respBody.get("accessJwt"), respBody.get("did"));
     } else {
       throw new RuntimeException("Failed to authenticate with BlueSky: " + response.body());
+    }
+  }
+
+  // Helper to resolve a handle to a DID using BlueSky identity service
+  private String resolveDidForHandle(String handle) {
+    try {
+      var response = httpClient.GET("/xrpc/com.atproto.identity.resolveHandle?handle=" + handle)
+        .responseBodyAs(Map.class)
+        .invoke();
+      var statusCode = response.httpResponse().status().intValue();
+      if (statusCode >= 200 && statusCode < 300) {
+        Map<?, ?> respBody = response.body();
+        Object did = respBody.get("did");
+        return did != null ? did.toString() : null;
+      } else {
+        log.warn("Failed to resolve DID for handle {}: {}", handle, response.body());
+        return null;
+      }
+    } catch (Exception e) {
+      log.error("Exception resolving DID for handle {}", handle, e);
+      return null;
     }
   }
 }

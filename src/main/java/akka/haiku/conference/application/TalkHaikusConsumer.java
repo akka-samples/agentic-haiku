@@ -11,6 +11,11 @@ import akka.javasdk.http.HttpClientProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,6 +41,7 @@ public class TalkHaikusConsumer extends Consumer {
       try {
 
         Optional<Proposal> proposal = Optional.empty();
+
         if (haikuGen.haikuId().isTalk()) {
           var proposalId = haikuGen.haikuId().extractTalkId();
           proposal = Optional.of(fetchProposal(proposalId));
@@ -55,11 +61,14 @@ public class TalkHaikusConsumer extends Consumer {
             .toList()
         ).orElseGet(List::of);
 
+        var scheduleTime = calculateSchedule(proposal);
+
         var post = SocialPostEntity.SocialPostState.of(
           haikuGen.haiku().get().formatted(),
           haikuGen.image().get().url(),
-          List.of("#akka", "#devoxx"),
-          xHandlers, blueskyUsers);
+          contextTags(proposal),
+          xHandlers, blueskyUsers,
+          scheduleTime);
 
           logger.info("Creating post for: {}.", haikuGen.haikuId());
 
@@ -81,6 +90,34 @@ public class TalkHaikusConsumer extends Consumer {
 
     return effects().ignore();
 
+  }
+
+  private Duration calculateSchedule(Optional<Proposal> proposal) {
+
+    // TODO: what if timeslot is empty?
+    if (proposal.isPresent()) {
+      var timeslot = proposal.get().timeSlots().getFirst();
+      ZoneId belgiumZone = ZoneId.of(timeslot.timezone());
+      ZonedDateTime belgiumTime = timeslot.fromDate().atZone(belgiumZone);
+
+      var now = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+      var durationUntilTalk = Duration.between(now, belgiumTime.toInstant());
+      return durationUntilTalk.minus(Duration.ofMinutes(45));
+
+    } else {
+      return Duration.ofSeconds(20);
+    }
+  }
+
+  private List<String> contextTags(Optional<Proposal> proposal) {
+    if (proposal.isPresent()) {
+        if (proposal.get().timeSlots().isEmpty()) {
+        var room = proposal.get().timeSlots().getFirst().roomName();
+        return List.of("akka", room.replace(" ", "").toLowerCase());
+      }
+    }
+
+    return List.of("akka");
   }
 
   private Proposal fetchProposal(String proposalId) {

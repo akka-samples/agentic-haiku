@@ -6,6 +6,7 @@ import akka.javasdk.keyvalueentity.KeyValueEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.List;
 
 @ComponentId("social-post-entity")
@@ -14,13 +15,13 @@ public class SocialPostEntity extends KeyValueEntity<SocialPostEntity.SocialPost
     private static final Logger log = LoggerFactory.getLogger(SocialPostEntity.class);
 
 
-  public record SocialPostState(
-                                String post,
+  public record SocialPostState(String post,
                                 String imageUrl,
                                 List<String> tags,
                                 List<String> xHandlers,
                                 List<String> bskyHandlers,
-                                Status status) {
+                                Duration scheduleTime, Status status
+  ) {
 
     public boolean approved() {
       return status == Status.APPROVED;
@@ -42,17 +43,17 @@ public class SocialPostEntity extends KeyValueEntity<SocialPostEntity.SocialPost
     }
     public static SocialPostState of(String post, String imageUrl, List<String> tags,
                                      List<String> xHandlers,
-                                     List<String> bskyHandlers) {
-      return new SocialPostState(post, imageUrl, tags, xHandlers, bskyHandlers, Status.CREATED);
+                                     List<String> bskyHandlers, Duration scheduledTime) {
+      return new SocialPostState(post, imageUrl, tags, xHandlers, bskyHandlers, scheduledTime, Status.CREATED);
       }
 
 
       public SocialPostState asRejected() {
-        return new SocialPostState(post, imageUrl, tags, xHandlers, bskyHandlers, Status.REJECTED);
+        return new SocialPostState(post, imageUrl, tags, xHandlers, bskyHandlers, scheduleTime, Status.REJECTED);
       }
 
     public SocialPostState asApproved() {
-      return new SocialPostState(post, imageUrl, tags, xHandlers, bskyHandlers, Status.APPROVED);
+      return new SocialPostState(post, imageUrl, tags, xHandlers, bskyHandlers, scheduleTime, Status.APPROVED);
     }
 
   }

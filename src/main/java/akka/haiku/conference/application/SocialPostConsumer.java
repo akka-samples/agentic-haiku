@@ -35,7 +35,7 @@ public class SocialPostConsumer extends Consumer {
     if (postState.created()) {
         scheduler.createSingleTimer(
           postId,
-          Duration.ofSeconds(10),
+          postState.scheduleTime(),
           componentClient.forTimedAction()
             .method(SocialPublisherAction::publishSocialPost)
             .deferred(postId)
