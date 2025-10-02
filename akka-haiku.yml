@@ -17,6 +17,16 @@ service:
     value: /google-application-credentials-path/credentials.json
   - name: HAIKU_APP_URL
     value: https://dry-haze-9885.gcp-us-east1.akka.services
+  - name: BSKY_USER
+    valueFrom:
+      secretKeyRef:
+        key: bluesky
+        name: username
+  - name: BSKY_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        key: bluesky
+        name: pwd
   image: kcr.us-east-1.kalix.io/lightbend-eng/devoxx-be/akka-haiku:1.0-SNAPSHOT-20251002125739
   resources:
     runtime:

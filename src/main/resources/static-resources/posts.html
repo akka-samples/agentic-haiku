@@ -44,7 +44,7 @@
             background: #7f8c8d;
             cursor: not-allowed;
         }
-        .view-btn {
+        .regen-btn {
             background: #3498db;
             color: white;
             border: none;
@@ -53,7 +53,7 @@
             cursor: pointer;
             font-size: 14px;
         }
-        .view-btn:hover {
+        .regen-btn:hover {
             background: #2980b9;
         }
         .approve-btn {
@@ -151,8 +151,9 @@
         </div>
         <div class="topline"></div>
         <div style="padding: 20px;">
-            <button class="refresh-btn" onclick="loadPosts()">Refresh Posts</button>
-            <div id="loading" class="loading">Loading posts...</div>
+            <label style="display: flex; align-items: center; margin-bottom: 12px; font-size: 16px;">
+                <input type="checkbox" id="hideTokenToggle" style="margin-right: 8px;" /> Show only talk Haikus
+            </label>
             <div id="error" class="error" style="display: none;"></div>
             <table class="posts-table" id="postsTable" style="display: none;">
                 <thead>
@@ -177,8 +178,8 @@
             <span class="close" id="closeModal">&times;</span>
             <div id="modalBody"></div>
             <div class="modal-actions">
+                <button class="regen-btn" id="modalRegenerate">Regenerate</button>
                 <button class="approve-btn" id="modalApprove">Approve</button>
-                <button class="view-btn" id="modalRegenerate">Regenerate</button>
                 <button class="reject-btn" id="modalDelete">Reject</button>
             </div>
         </div>
@@ -189,14 +190,14 @@
             this.posts = [];
             this.postsById = {};
             this.sse = null;
+            this.hideTokenPosts = false;
             this.loadPosts();
             this.setupModal();
+            this.setupToggle();
         }
         loadPosts() {
-            const loadingDiv = document.getElementById('loading');
             const errorDiv = document.getElementById('error');
             const table = document.getElementById('postsTable');
-            loadingDiv.style.display = 'block';
             errorDiv.style.display = 'none';
             table.style.display = 'none';
             // Use SSE for live updates
@@ -204,7 +205,10 @@
             this.sse = new EventSource('/posts');
             this.sse.onmessage = (event) => {
                 try {
-                    if (!event.data || !event.data.trim()) return; // Ignore empty/whitespace events
+                    if (!event.data || !event.data.trim()) {
+                        // Ignore empty events, do not clear posts
+                        return;
+                    }
                     console.log('SSE /posts event.data:', event.data); // Debug log
                     const parsed = JSON.parse(event.data);
                     // If the event is a single post object, add/update it
@@ -222,31 +226,52 @@
                     } else {
                         throw new Error('Unexpected posts format');
                     }
-                    // Update posts array from map
-                    this.posts = Object.values(this.postsById);
+                    // Convert scheduleTime from ISO string to millis if needed
+                    Object.values(this.postsById).forEach(post => {
+                        if (post.scheduleTime && typeof post.scheduleTime === 'string') {
+                            const millis = Date.parse(post.scheduleTime);
+                            post._scheduleTimeMillis = isNaN(millis) ? 0 : millis;
+                        } else if (typeof post.scheduleTime === 'number') {
+                            post._scheduleTimeMillis = post.scheduleTime;
+                        } else {
+                            post._scheduleTimeMillis = 0;
+                        }
+                    });
+                    // Update posts array from map and sort by scheduleTime ascending
+                    this.posts = Object.values(this.postsById).sort((a, b) => (a._scheduleTimeMillis || 0) - (b._scheduleTimeMillis || 0));
                     this.renderPosts();
-                    loadingDiv.style.display = 'none';
-                    table.style.display = 'table';
+                    table.style.display = this.posts.length > 0 ? 'table' : 'none';
                 } catch (e) {
-                    loadingDiv.style.display = 'none';
                     errorDiv.textContent = 'Failed to parse posts: ' + e.message;
                     errorDiv.style.display = 'block';
+                    table.style.display = 'none';
                 }
             };
             this.sse.onerror = () => {
-                loadingDiv.style.display = 'none';
                 errorDiv.textContent = 'Failed to load posts (SSE error).';
                 errorDiv.style.display = 'block';
+                table.style.display = 'none';
             };
+        }
+        setupToggle() {
+            const toggle = document.getElementById('hideTokenToggle');
+            toggle.checked = this.hideTokenPosts;
+            toggle.addEventListener('change', () => {
+                this.hideTokenPosts = toggle.checked;
+                this.renderPosts();
+            });
         }
         renderPosts() {
             const tbody = document.getElementById('postsTableBody');
             tbody.innerHTML = '';
-            if (this.posts.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #7f8c8d;">No posts found</td></tr>';
+            let postsToShow = this.posts;
+            if (this.hideTokenPosts) {
+                postsToShow = postsToShow.filter(post => !(post.id && post.id.startsWith('token:')));
+            }
+            if (postsToShow.length === 0) {
                 return;
             }
-            this.posts.forEach(post => {
+            postsToShow.forEach(post => {
                 const row = this.createPostRow(post);
                 tbody.appendChild(row);
             });
@@ -278,10 +303,15 @@
             bskyHandlersCell.innerHTML = post.bskyHandlers && post.bskyHandlers.length ? this.escapeHtml(post.bskyHandlers.join(', ')) : '<span style="color:#7f8c8d;font-style:italic;">-</span>';
             // Actions
             const actionsCell = document.createElement('td');
+            // haikus generated from a token, can't be regenerated, so we hide the button
+            const hideRegenerate = post.id && post.id.startsWith('token:');
             actionsCell.innerHTML = `
+                <button class="regen-btn" onclick="event.stopPropagation();postsManager.regeneratePostByIdAndTalkId('${post.id}')" ${!post.id || hideRegenerate ? 'style=\'display:none\'' : ''} ${!post.id ? 'disabled' : ''}>Regenerate</button>
                 <button class="approve-btn" onclick="event.stopPropagation();postsManager.approvePost('${post.id}')" ${!post.id ? 'disabled' : ''}>Approve</button>
-                <button class="view-btn" onclick="event.stopPropagation();postsManager.regeneratePostByIdAndTalkId('${post.id}')" ${!post.id ? 'disabled' : ''}>Regenerate</button>
                 <button class="reject-btn" onclick="event.stopPropagation();postsManager.rejectPost(event, '${post.id}')" ${!post.id ? 'disabled' : ''}>Reject</button>
+                <div class="post-date" style="margin-top:8px;font-size:12px;color:#bdc3c7;">
+                  ${this.formatScheduleTime(post)}
+                </div>
             `;
             row.appendChild(idCell);
             row.appendChild(postCell);
@@ -313,6 +343,11 @@
             // Enable/disable Regenerate button in modal
             const regenBtn = document.getElementById('modalRegenerate');
             regenBtn.disabled = !post.id;
+            if (post.id && post.id.startsWith('token:')) {
+                regenBtn.style.display = 'none';
+            } else {
+                regenBtn.style.display = '';
+            }
         }
         regeneratePostByIdAndTalkId(postId) {
             if (!postId) {
@@ -364,7 +399,7 @@
         approvePost(postId) {
             if (!postId) return;
             fetch(`/posts/${postId}/approve`, { method: 'POST' })
-                .then(r => {
+                .then( r => {
                     if (!r.ok) throw new Error('Approve failed');
                     window.location.reload();
                 })
@@ -389,6 +424,24 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+        // Add a helper to format the scheduleTime in the user's local time zone
+        formatScheduleTime(post) {
+            let millis = post._scheduleTimeMillis;
+            if (!millis && post.scheduleTime && typeof post.scheduleTime === 'string') {
+                millis = Date.parse(post.scheduleTime);
+            }
+            if (!millis || isNaN(millis)) return '';
+            const d = new Date(millis);
+            // Format as YYYY-MM-DD HH:mm (local TZ abbreviation)
+            const year = d.getFullYear();
+            const month = String(d.getMonth()+1).padStart(2,'0');
+            const day = String(d.getDate()).padStart(2,'0');
+            const hour = String(d.getHours()).padStart(2,'0');
+            const min = String(d.getMinutes()).padStart(2,'0');
+            // Get local time zone abbreviation
+            const tz = d.toLocaleTimeString(undefined, { timeZoneName: 'short' }).split(' ').pop();
+            return `${year}-${month}-${day} ${hour}:${min} ${tz}`;
         }
     }
     let postsManager;

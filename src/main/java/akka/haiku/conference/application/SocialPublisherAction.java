@@ -6,8 +6,6 @@ import akka.javasdk.timedaction.TimedAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-
 @ComponentId("post-publisher")
 public class SocialPublisherAction extends TimedAction {
 
@@ -30,14 +28,14 @@ public class SocialPublisherAction extends TimedAction {
 
     if (post.notRejected()) {
       log.debug("Publishing on BlueSky platform {}, handlers [{}]", postId, post.bskyHandlers());
-      socialPublisher.publish(post.post(), post.imageUrl(), List.of(), List.of());
-    } else {
-      log.debug("Post not approved on time. Skipping publishing to BlueSky platform {}, handlers [{}]", postId,
-        post.bskyHandlers());
+      socialPublisher.publish(post.post(), post.imageUrl(), post.tags(), post.bskyHandlers());
+
+      // if we publish it, we mark it as approve so it is removed from the queue list
       componentClient
         .forKeyValueEntity(postId)
-        .method(SocialPostEntity::rejectPost).invoke();
+        .method(SocialPostEntity::approvePost).invoke();
     }
+
     return effects().done();
   }
 }

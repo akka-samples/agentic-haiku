@@ -8,6 +8,7 @@ import akka.javasdk.consumer.Consumer;
 import akka.javasdk.timer.TimerScheduler;
 
 import java.time.Duration;
+import java.time.Instant;
 
 
 /**
@@ -27,15 +28,16 @@ public class SocialPostConsumer extends Consumer {
     this.scheduler = scheduler;
   }
 
+  // as soon as the post is created, we schedule it for publishing
   public Effect onChange(SocialPostEntity.SocialPostState postState) {
 
     var postId = messageContext().eventSubject().get();
-    // as soon as the post is created, we schedule it for publishing
+    var scheduleTime = Duration.between(Instant.now(), postState.scheduleTime());
 
     if (postState.created()) {
         scheduler.createSingleTimer(
           postId,
-          Duration.ofSeconds(10),
+          scheduleTime,
           componentClient.forTimedAction()
             .method(SocialPublisherAction::publishSocialPost)
             .deferred(postId)

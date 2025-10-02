@@ -6,6 +6,8 @@ import akka.javasdk.keyvalueentity.KeyValueEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 @ComponentId("social-post-entity")
@@ -14,13 +16,12 @@ public class SocialPostEntity extends KeyValueEntity<SocialPostEntity.SocialPost
     private static final Logger log = LoggerFactory.getLogger(SocialPostEntity.class);
 
 
-  public record SocialPostState(
-                                String post,
+  public record SocialPostState(String post,
                                 String imageUrl,
                                 List<String> tags,
-                                List<String> xHandlers,
                                 List<String> bskyHandlers,
-                                Status status) {
+                                Instant scheduleTime, Status status
+  ) {
 
     public boolean approved() {
       return status == Status.APPROVED;
@@ -41,18 +42,17 @@ public class SocialPostEntity extends KeyValueEntity<SocialPostEntity.SocialPost
       APPROVED
     }
     public static SocialPostState of(String post, String imageUrl, List<String> tags,
-                                     List<String> xHandlers,
-                                     List<String> bskyHandlers) {
-      return new SocialPostState(post, imageUrl, tags, xHandlers, bskyHandlers, Status.CREATED);
+                                     List<String> bskyHandlers, Instant scheduledTime) {
+      return new SocialPostState(post, imageUrl, tags, bskyHandlers, scheduledTime, Status.CREATED);
       }
 
 
       public SocialPostState asRejected() {
-        return new SocialPostState(post, imageUrl, tags, xHandlers, bskyHandlers, Status.REJECTED);
+        return new SocialPostState(post, imageUrl, tags,  bskyHandlers, scheduleTime, Status.REJECTED);
       }
 
     public SocialPostState asApproved() {
-      return new SocialPostState(post, imageUrl, tags, xHandlers, bskyHandlers, Status.APPROVED);
+      return new SocialPostState(post, imageUrl, tags, bskyHandlers, scheduleTime, Status.APPROVED);
     }
 
   }
