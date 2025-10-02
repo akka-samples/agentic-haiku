@@ -142,6 +142,58 @@
         .posts-table tbody tr td button {
             cursor: pointer;
         }
+        .top-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .toggle-group {
+            display: flex;
+            gap: 16px;
+        }
+        .switch {
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 0;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: #7f8c8d;
+            border-radius: 24px;
+            margin-right: 12px;
+            transition: background 0.2s;
+        }
+        .slider:before {
+            content: "";
+            position: absolute;
+            left: 4px;
+            top: 4px;
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+        .switch input:checked + .slider {
+            background: #3498db;
+        }
+        .switch input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+        .switch-label {
+            color: #f5f6fa;
+            user-select: none;
+        }
     </style>
 </head>
 <body>
@@ -151,9 +203,21 @@
         </div>
         <div class="topline"></div>
         <div style="padding: 20px;">
-            <label style="display: flex; align-items: center; margin-bottom: 12px; font-size: 16px;">
-                <input type="checkbox" id="hideTokenToggle" style="margin-right: 8px;" /> Show only talk Haikus
-            </label>
+            <div class="top-controls">
+                <button class="refresh-btn" id="refreshBtn">Refresh page</button>
+                <div class="toggle-group">
+                    <label class="switch">
+                        <input type="checkbox" id="hideTokenToggle">
+                        <span class="slider"></span>
+                        <span class="switch-label">Talk haikus</span>
+                    </label>
+                    <label class="switch">
+                        <input type="checkbox" id="hideTalkToggle">
+                        <span class="slider"></span>
+                        <span class="switch-label">Token haikus</span>
+                    </label>
+                </div>
+            </div>
             <div id="error" class="error" style="display: none;"></div>
             <table class="posts-table" id="postsTable" style="display: none;">
                 <thead>
@@ -189,75 +253,60 @@
         constructor() {
             this.posts = [];
             this.postsById = {};
-            this.sse = null;
             this.hideTokenPosts = false;
+            this.hideTalkPosts = false;
             this.loadPosts();
             this.setupModal();
             this.setupToggle();
+            this.setupRefresh();
         }
-        loadPosts() {
+        async loadPosts() {
             const errorDiv = document.getElementById('error');
             const table = document.getElementById('postsTable');
             errorDiv.style.display = 'none';
             table.style.display = 'none';
-            // Use SSE for live updates
-            if (this.sse) this.sse.close();
-            this.sse = new EventSource('/posts');
-            this.sse.onmessage = (event) => {
-                try {
-                    if (!event.data || !event.data.trim()) {
-                        // Ignore empty events, do not clear posts
-                        return;
-                    }
-                    console.log('SSE /posts event.data:', event.data); // Debug log
-                    const parsed = JSON.parse(event.data);
-                    // If the event is a single post object, add/update it
-                    if (parsed && typeof parsed === 'object' && parsed.id) {
-                        this.postsById[parsed.id] = parsed;
-                    } else if (Array.isArray(parsed)) {
-                        // If the event is an array, replace all
-                        parsed.forEach(post => {
-                            if (post && post.id) this.postsById[post.id] = post;
-                        });
-                    } else if (parsed && Array.isArray(parsed.items)) {
-                        parsed.items.forEach(post => {
-                            if (post && post.id) this.postsById[post.id] = post;
-                        });
+            try {
+                const response = await fetch('/posts');
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                const data = await response.json();
+                let posts = data.items || data; // Support both {items:[]} and []
+                this.postsById = {};
+                posts.forEach(post => {
+                    if (post && post.id) this.postsById[post.id] = post;
+                });
+                Object.values(this.postsById).forEach(post => {
+                    if (post.scheduleTime && typeof post.scheduleTime === 'string') {
+                        const millis = Date.parse(post.scheduleTime);
+                        post._scheduleTimeMillis = isNaN(millis) ? 0 : millis;
+                    } else if (typeof post.scheduleTime === 'number') {
+                        post._scheduleTimeMillis = post.scheduleTime;
                     } else {
-                        throw new Error('Unexpected posts format');
+                        post._scheduleTimeMillis = 0;
                     }
-                    // Convert scheduleTime from ISO string to millis if needed
-                    Object.values(this.postsById).forEach(post => {
-                        if (post.scheduleTime && typeof post.scheduleTime === 'string') {
-                            const millis = Date.parse(post.scheduleTime);
-                            post._scheduleTimeMillis = isNaN(millis) ? 0 : millis;
-                        } else if (typeof post.scheduleTime === 'number') {
-                            post._scheduleTimeMillis = post.scheduleTime;
-                        } else {
-                            post._scheduleTimeMillis = 0;
-                        }
-                    });
-                    // Update posts array from map and sort by scheduleTime ascending
-                    this.posts = Object.values(this.postsById).sort((a, b) => (a._scheduleTimeMillis || 0) - (b._scheduleTimeMillis || 0));
-                    this.renderPosts();
-                    table.style.display = this.posts.length > 0 ? 'table' : 'none';
-                } catch (e) {
-                    errorDiv.textContent = 'Failed to parse posts: ' + e.message;
-                    errorDiv.style.display = 'block';
-                    table.style.display = 'none';
-                }
-            };
-            this.sse.onerror = () => {
-                errorDiv.textContent = 'Failed to load posts (SSE error).';
+                });
+                this.posts = Object.values(this.postsById).sort((a, b) => (a._scheduleTimeMillis || 0) - (b._scheduleTimeMillis || 0));
+                this.renderPosts();
+                table.style.display = this.posts.length > 0 ? 'table' : 'none';
+            } catch (e) {
+                errorDiv.textContent = 'Failed to load posts: ' + e.message;
                 errorDiv.style.display = 'block';
                 table.style.display = 'none';
-            };
+            }
+        }
+        setupRefresh() {
+            document.getElementById('refreshBtn').addEventListener('click', () => this.loadPosts());
         }
         setupToggle() {
-            const toggle = document.getElementById('hideTokenToggle');
-            toggle.checked = this.hideTokenPosts;
-            toggle.addEventListener('change', () => {
-                this.hideTokenPosts = toggle.checked;
+            const tokenToggle = document.getElementById('hideTokenToggle');
+            tokenToggle.checked = this.hideTokenPosts;
+            tokenToggle.addEventListener('change', () => {
+                this.hideTokenPosts = tokenToggle.checked;
+                this.renderPosts();
+            });
+            const talkToggle = document.getElementById('hideTalkToggle');
+            talkToggle.checked = this.hideTalkPosts;
+            talkToggle.addEventListener('change', () => {
+                this.hideTalkPosts = talkToggle.checked;
                 this.renderPosts();
             });
         }
@@ -267,6 +316,9 @@
             let postsToShow = this.posts;
             if (this.hideTokenPosts) {
                 postsToShow = postsToShow.filter(post => !(post.id && post.id.startsWith('token:')));
+            }
+            if (this.hideTalkPosts) {
+                postsToShow = postsToShow.filter(post => post.id && post.id.startsWith('token:'));
             }
             if (postsToShow.length === 0) {
                 return;
