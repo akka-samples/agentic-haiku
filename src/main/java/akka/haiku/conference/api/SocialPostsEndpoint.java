@@ -26,12 +26,11 @@ public class SocialPostsEndpoint {
 
 
   @Get
-  public HttpResponse posts() {
-    var contentUpdates = componentClient.forView()
-      .stream(SocialPostView::getOpenPosts)
-      .source();
-
-    return HttpResponses.serverSentEvents(contentUpdates);
+  public java.util.List<SocialPostView.SocialPostRow> posts() {
+    return componentClient.forView()
+      .method(SocialPostView::getAllPosts)
+      .invoke()
+      .items();
   }
 
   @Post("/{postId}/reject")

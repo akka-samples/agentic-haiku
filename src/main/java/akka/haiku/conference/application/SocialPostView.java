@@ -21,6 +21,8 @@ public class SocialPostView extends View {
                               Instant scheduleTime) {
   }
 
+  public record SocialPostItems(List<SocialPostRow> items) {}
+
      @Consume.FromKeyValueEntity(SocialPostEntity.class)
     public static class Updater extends TableUpdater<SocialPostRow> {
       public Effect<SocialPostRow> onChange(SocialPostState state) {
@@ -42,9 +44,13 @@ public class SocialPostView extends View {
       }
     }
 
-    @Query(value = "SELECT * FROM social_post", streamUpdates = true)
-    public QueryStreamEffect<SocialPostRow> getOpenPosts() {
-        return queryStreamResult();
+    @Query(value = """
+      SELECT * as items
+      FROM social_post
+      ORDER BY scheduleTime DESC
+      LIMIT 50""")
+    public QueryEffect<SocialPostItems> getAllPosts() {
+        return queryResult();
     }
 
 }
