@@ -32,55 +32,56 @@ public class SocialPublisherBlueSky implements SocialPublisher {
   }
 
     @Override
-    public void publish(String message, String imageUrl, List<String> tags, List<String> handlers) {
+    public void publish(String message, String imageUrl, List<String> tags, List<String> names, List<String> handlers) {
         try {
           var sess = initiateSession();
           StringBuilder post = new StringBuilder();
 
           // Prepare facets for mentions and tags
           List<Map<String, Object>> facets = new java.util.ArrayList<>();
+          var separator = ", ";
 
+          names.forEach(name -> post.append(name).append(separator));
           // Add mentions to post and facets
-          if (handlers != null && !handlers.isEmpty()) {
+          // only add mentions when posting from official account
+          if (identifier.equals("akka.io")) {
+            if (handlers != null && !handlers.isEmpty()) {
 
-            var separator = ", ";
-            for (String handler : handlers) {
-              if (handler != null && !handler.isBlank()) {
-                String cleanHandle = handler.replace("@", "").trim();
-                // Resolve handle to DID (if not already a DID)
-                String did = cleanHandle.startsWith("did:") ? cleanHandle : resolveDidForHandle(cleanHandle);
-                if (did != null && !did.isBlank()) {
-                  String mentionText = "@" + cleanHandle;
-                  post
-                    .append(mentionText)
-                    .append(separator);
+              for (String handler : handlers) {
+                if (handler != null && !handler.isBlank()) {
+                  String cleanHandle = handler.replace("@", "").trim();
+                  // Resolve handle to DID (if not already a DID)
+                  String did = cleanHandle.startsWith("did:") ? cleanHandle : resolveDidForHandle(cleanHandle);
+                  if (did != null && !did.isBlank()) {
+                    String mentionText = "@" + cleanHandle;
+                    post
+                      .append(mentionText)
+                      .append(separator);
 
-                  int start = post.length() - mentionText.length();
-                  int end = post.length();
-                  Map<String, Object> index = new HashMap<>();
-                  index.put("byteStart", start);
-                  index.put("byteEnd", end);
-                  Map<String, Object> feature = new HashMap<>();
-                  feature.put("$type", "app.bsky.richtext.facet#mention");
-                  feature.put("did", did);
-                  Map<String, Object> facet = new HashMap<>();
-                  facet.put("index", index);
-                  facet.put("features", List.of(feature));
-                  facets.add(facet);
-                }
-
-                // after the comma separeted handlers, we add the message
-                var messages = config.getStringList("haiku.best-wishes");
-                int randomIndex = new Random().nextInt(messages.size());
-                post.append(messages.get(randomIndex));
-                post.append("\n");
+                    int start = post.length() - mentionText.length();
+                    int end = post.length();
+                    Map<String, Object> index = new HashMap<>();
+                    index.put("byteStart", start);
+                    index.put("byteEnd", end);
+                    Map<String, Object> feature = new HashMap<>();
+                    feature.put("$type", "app.bsky.richtext.facet#mention");
+                    feature.put("did", did);
+                    Map<String, Object> facet = new HashMap<>();
+                    facet.put("index", index);
+                    facet.put("features", List.of(feature));
+                    facets.add(facet);
+                  }
+              }
             }
-
-            // two lines to clearly separate it from the haiku
-            post.append("\n\n");
           }
         }
-
+          // after the handlers and name, we add the message
+          var messages = config.getStringList("haiku.best-wishes");
+          int randomIndex = new Random().nextInt(messages.size());
+          post.append(messages.get(randomIndex));
+          post.append("\n");
+          // two lines to clearly separate it from the haiku
+          post.append("\n\n");
           post.append(message);
 
           // Append tags as hashtags, ensuring correct formatting and collect facets

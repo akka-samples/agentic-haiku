@@ -58,12 +58,21 @@ public class HaikusConsumer extends Consumer {
             .toList()
         ).orElseGet(List::of);
 
+        // collect full names from speakers without bsky
+        var names = proposal.map(p ->
+          p.speakers().stream()
+            .filter(speaker -> speaker.blueskyUsername() == null || speaker.blueskyUsername().trim().isEmpty())
+            .map(Speaker::fullName)
+            .toList()
+        ).orElseGet(List::of);
+
         var scheduleTime = calculateSchedule(proposal);
 
         var post = SocialPostEntity.SocialPostState.of(
           haikuGen.haiku().get().formatted(),
           haikuGen.image().get().url(),
           contextTags(proposal),
+          names,
           blueskyUsers,
           scheduleTime);
 

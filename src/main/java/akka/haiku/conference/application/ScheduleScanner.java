@@ -8,10 +8,9 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ScheduleScanner {
 
@@ -39,33 +38,42 @@ public class ScheduleScanner {
 
     log.info("loaded {} schedule slots for day {}", scheduleSlots.size(), day);
 
+    var now = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+    AtomicInteger atomicDelay = new AtomicInteger(0);
+
     scheduleSlots.stream()
       .filter(scheduleSlot -> scheduleSlot.proposal() != null)
+      .filter(scheduleSlot -> {
+          // overflow slots have a slug set to overflow, we need to filter it out
+          // for the record, there is 'overflow' bool, but it's always false
+          if (scheduleSlot.sessionType() != null && scheduleSlot.sessionType().slug() != null) {
+            return !scheduleSlot.sessionType().slug().equals("overflow");
+          }
+          return true;
+        }
+      )
       .forEach(scheduleSlot -> {
         log.debug("Processing schedule slot: {}, talk {}, {}", scheduleSlot.id(), scheduleSlot.proposal().id(), scheduleSlot.proposal().title());
 
-        ZoneId belgiumZone = ZoneId.of("Europe/Brussels");
-        ZonedDateTime belgiumTime = scheduleSlot.fromDate().atZone(belgiumZone);
-
-        var now = Instant.now().truncatedTo(ChronoUnit.MINUTES);
-
-        var durationUntilTalk = Duration.between(now, belgiumTime.toInstant());
-        var durationUntilGeneration = durationUntilTalk.minus(DELAY);
+        var delay = atomicDelay.get();
+        var durationUntilGeneration = now.plus(Duration.ofSeconds(atomicDelay.get()));
+        atomicDelay.set(delay + 10);
 
         String timerName = timerName(scheduleSlot.proposal().id());
 
+        // we need some throttling when generate haikus for a whole day
+        // if we run then all together, the LLM provider will rate-limit us
+        var timeToSchedule = Duration.between(now, durationUntilGeneration);
         timerScheduler.createSingleTimer(
           timerName,
-          durationUntilGeneration,
+          timeToSchedule,
           componentClient.forWorkflow(String.valueOf(scheduleSlot.proposal().id()))
             .method(TalkHaikuGenerationWorkflow::start)
             .deferred()
         );
 
-        log.info("Scheduled timer '{}' to start in {} at {} for talk '{}'",
+        log.info("Scheduled timer '{}' to generate haiku for  for talk '{}'",
           timerName,
-          durationUntilGeneration,
-          now.plus(durationUntilGeneration).atZone(belgiumZone).toLocalTime(),
           scheduleSlot.proposal().id());
       });
   }

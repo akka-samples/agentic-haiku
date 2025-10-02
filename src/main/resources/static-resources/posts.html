@@ -226,7 +226,7 @@
                         <th>Post</th>
                         <th>URL</th>
                         <th>Tags</th>
-                        <th>X Handlers</th>
+                        <th>Names</th>
                         <th>Bluesky Handlers</th>
                         <th>Actions</th>
                     </tr>
@@ -347,9 +347,9 @@
             // Tags
             const tagsCell = document.createElement('td');
             tagsCell.innerHTML = post.tags && post.tags.length ? this.escapeHtml(post.tags.join(', ')) : '<span style="color:#7f8c8d;font-style:italic;">-</span>';
-            // X Handlers
-            const xHandlersCell = document.createElement('td');
-            xHandlersCell.innerHTML = post.xHandlers && post.xHandlers.length ? this.escapeHtml(post.xHandlers.join(', ')) : '<span style="color:#7f8c8d;font-style:italic;">-</span>';
+            // Names
+            const namesCell = document.createElement('td');
+            namesCell.innerHTML = post.names && post.names.length ? this.escapeHtml(post.names.join(', ')) : '<span style="color:#7f8c8d;font-style:italic;">-</span>';
             // Bluesky Handlers
             const bskyHandlersCell = document.createElement('td');
             bskyHandlersCell.innerHTML = post.bskyHandlers && post.bskyHandlers.length ? this.escapeHtml(post.bskyHandlers.join(', ')) : '<span style="color:#7f8c8d;font-style:italic;">-</span>';
@@ -369,7 +369,7 @@
             row.appendChild(postCell);
             row.appendChild(urlCell);
             row.appendChild(tagsCell);
-            row.appendChild(xHandlersCell);
+            row.appendChild(namesCell);
             row.appendChild(bskyHandlersCell);
             row.appendChild(actionsCell);
             return row;
@@ -388,7 +388,7 @@
                 ${post.url ? `<img src="${this.escapeHtml(post.url)}" alt="post image" style="max-width:100%;max-height:40vh;border-radius:6px;box-shadow:0 2px 8px #000;">` : '<span style="color:#7f8c8d;font-style:italic;">No image</span>'}
                 </p>
                 <p><strong>Tags:</strong> ${post.tags && post.tags.length ? this.escapeHtml(post.tags.join(', ')) : '-'}</p>
-                <p><strong>X Handlers:</strong> ${post.xHandlers && post.xHandlers.length ? this.escapeHtml(post.xHandlers.join(', ')) : '-'}</p>
+                <p><strong>Names:</strong> ${post.names && post.names.length ? this.escapeHtml(post.names.join(', ')) : '-'}</p>
                 <p><strong>Bluesky Handlers:</strong> ${post.bskyHandlers && post.bskyHandlers.length ? this.escapeHtml(post.bskyHandlers.join(', ')) : '-'}</p>
             `;
             document.getElementById('postModal').style.display = 'block';

@@ -28,7 +28,7 @@ public class SocialPublisherAction extends TimedAction {
 
     if (post.notRejected()) {
       log.debug("Publishing on BlueSky platform {}, handlers [{}]", postId, post.bskyHandlers());
-      socialPublisher.publish(post.post(), post.imageUrl(), post.tags(), post.bskyHandlers());
+      socialPublisher.publish(post.post(), post.imageUrl(), post.tags(), post.names(), post.bskyHandlers());
 
       // if we publish it, we mark it as approve so it is removed from the queue list
       componentClient

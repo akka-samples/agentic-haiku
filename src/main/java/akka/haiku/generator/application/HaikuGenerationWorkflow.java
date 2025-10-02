@@ -151,6 +151,7 @@ public class HaikuGenerationWorkflow extends Workflow<HaikuGeneration> {
 
     log.debug("Workflow [{}]: generating image for Haiku.", workflowId);
     var url = imageGenerator.generateImage(currentState().userInput(), haiku.formatted());
+
     log.info("Image generated: {}", url);
 
     return stepEffects()

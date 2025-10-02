@@ -68,6 +68,8 @@ public class TalkHaikuGenerationWorkflow extends Workflow<TalkHaikuGenerationWor
   }
 
   private StepEffect fetchTalk() {
+
+
     log.info("Fetching talk with id {}", talkId);
     var proposal =
       httpClient.GET("/api/public/talks/" + talkId).responseBodyAs(Proposal.class).invoke().body();
