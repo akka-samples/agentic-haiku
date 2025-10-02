@@ -61,7 +61,7 @@ public record HaikusEndpoint(ComponentClient componentClient, Materializer mater
     // a tick source to poll the workflow state
     // workflow progress messages are pushed to a queue and sent as SSE to UI
     Source.tick(ofMillis(500), ofSeconds(1), "tick").map(t -> {
-      log.debug("polling haiku gen state: {}", haikuId);
+      log.trace("polling haiku gen state: {}", haikuId);
 
       var state =
         componentClient.forView()
@@ -82,7 +82,7 @@ public record HaikusEndpoint(ComponentClient componentClient, Materializer mater
 
       // completed and we published all messages?
       if (state.completed() && publishedCount == size) {
-        log.debug("closing queue");
+        log.trace("closing queue");
         queue.complete();
       }
 
