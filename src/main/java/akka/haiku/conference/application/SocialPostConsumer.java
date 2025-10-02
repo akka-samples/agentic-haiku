@@ -33,26 +33,15 @@ public class SocialPostConsumer extends Consumer {
     // as soon as the post is created, we schedule it for publishing
 
     if (postState.created()) {
-      if (!postState.xHandlers().isEmpty()) {
         scheduler.createSingleTimer(
-          "x:" + postId,
-          Duration.ofSeconds(10),
-          componentClient.forTimedAction()
-            .method(PostPublisherAction::publishOnX)
-            .deferred(postId)
-        );
-      }
-
-      if (!postState.bskyHandlers().isEmpty()) {
-        scheduler.createSingleTimer(
-          "x:" + postId,
+          postId,
           Duration.ofSeconds(10),
           componentClient.forTimedAction()
             .method(SocialPublisherAction::publishSocialPost)
             .deferred(postId)
         );
-      }
     }
+
     return effects().done();
   }
 }

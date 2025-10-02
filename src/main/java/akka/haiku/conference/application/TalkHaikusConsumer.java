@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Optional;
 
 @ComponentId("haiku-social-publisher")
 @Consume.FromWorkflow(HaikuGenerationWorkflow.class)
@@ -30,23 +31,29 @@ public class TalkHaikusConsumer extends Consumer {
 
   public Effect onChange(HaikuGeneration haikuGen) {
 
-    if (haikuGen.isComplete() && haikuGen.haikuId().isTalk()) {
+    if (haikuGen.isComplete()) {
       logger.debug("Preparing haiku social post for: {}", haikuGen.haikuId());
       try {
-        var proposalId = haikuGen.haikuId().extractTalkId();
-        var proposal = fetchProposal(proposalId);
 
-        var xHandlers =
-          proposal.speakers().stream()
+        Optional<Proposal> proposal = Optional.empty();
+        if (haikuGen.haikuId().isTalk()) {
+          var proposalId = haikuGen.haikuId().extractTalkId();
+          proposal = Optional.of(fetchProposal(proposalId));
+        }
+
+        var xHandlers = proposal.map(p ->
+          p.speakers().stream()
             .map(Speaker::twitterHandle)
             .filter(handle -> handle != null && !handle.trim().isEmpty())
-            .toList();
+            .toList()).orElseGet(List::of);
 
-        var blueskyUsers =
-          proposal.speakers().stream()
+
+        var blueskyUsers = proposal.map(p ->
+          p.speakers().stream()
             .map(Speaker::blueskyUsername)
             .filter(handle -> handle != null && !handle.trim().isEmpty())
-            .toList();
+            .toList()
+        ).orElseGet(List::of);
 
         var post = SocialPostEntity.SocialPostState.of(
           haikuGen.haiku().get().formatted(),
@@ -56,8 +63,12 @@ public class TalkHaikusConsumer extends Consumer {
 
           logger.info("Creating post for: {}.", haikuGen.haikuId());
 
+          String postId = haikuGen.haikuId().isTalk() ?
+            haikuGen.haikuId().extractTalkId() :
+            haikuGen.haikuId().id();
+
           componentClient
-            .forKeyValueEntity(proposalId)
+            .forKeyValueEntity(postId)
             .method(SocialPostEntity::createPost)
             .invoke(post);
 
