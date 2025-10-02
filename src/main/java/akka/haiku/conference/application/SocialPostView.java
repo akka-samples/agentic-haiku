@@ -7,14 +7,18 @@ import akka.javasdk.annotations.Query;
 import akka.javasdk.view.TableUpdater;
 import akka.javasdk.view.View;
 
-import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 @ComponentId("social-post-view")
 public class SocialPostView extends View {
 
-  public record SocialPostRow(String id, String post, String url, List<String> tags,
-                              List<String> xHandlers, List<String> bskyHandlers, long scheduleTime) {
+  public record SocialPostRow(String id,
+                              String post,
+                              String url,
+                              List<String> tags,
+                              List<String> bskyHandlers,
+                              Instant scheduleTime) {
   }
 
      @Consume.FromKeyValueEntity(SocialPostEntity.class)
@@ -27,9 +31,8 @@ public class SocialPostView extends View {
             state.post(),
             state.imageUrl(),
             state.tags(),
-            state.xHandlers(),
             state.bskyHandlers(),
-            state.scheduleTime().toMillis());
+            state.scheduleTime());
             return effects().updateRow(row);
         } else {
             // this view exists to support the posts-queue

@@ -19,17 +19,21 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
-@ComponentId("haiku-social-publisher")
+/**
+ * This consumer listen to completed haikus workflows and
+ * prepare the content to be published to Bluesky
+ */
+@ComponentId("haikus-consumer")
 @Consume.FromWorkflow(HaikuGenerationWorkflow.class)
-public class TalkHaikusConsumer extends Consumer {
+public class HaikusConsumer extends Consumer {
 
 
   private final HttpClient httpClient;
   private final ComponentClient componentClient;
 
-  private final Logger logger = LoggerFactory.getLogger(TalkHaikusConsumer.class);
+  private final Logger logger = LoggerFactory.getLogger(HaikusConsumer.class);
 
-  public TalkHaikusConsumer(HttpClientProvider httpClientProvider, ComponentClient componentClient) {
+  public HaikusConsumer(HttpClientProvider httpClientProvider, ComponentClient componentClient) {
     this.httpClient = httpClientProvider.httpClientFor("https://dvbe25.cfp.dev");
     this.componentClient = componentClient;
   }
@@ -47,13 +51,6 @@ public class TalkHaikusConsumer extends Consumer {
           proposal = Optional.of(fetchProposal(proposalId));
         }
 
-        var xHandlers = proposal.map(p ->
-          p.speakers().stream()
-            .map(Speaker::twitterHandle)
-            .filter(handle -> handle != null && !handle.trim().isEmpty())
-            .toList()).orElseGet(List::of);
-
-
         var blueskyUsers = proposal.map(p ->
           p.speakers().stream()
             .map(Speaker::blueskyUsername)
@@ -67,7 +64,7 @@ public class TalkHaikusConsumer extends Consumer {
           haikuGen.haiku().get().formatted(),
           haikuGen.image().get().url(),
           contextTags(proposal),
-          xHandlers, blueskyUsers,
+          blueskyUsers,
           scheduleTime);
 
           logger.info("Creating post for: {}.", haikuGen.haikuId());
@@ -92,7 +89,7 @@ public class TalkHaikusConsumer extends Consumer {
 
   }
 
-  private Duration calculateSchedule(Optional<Proposal> proposal) {
+  private Instant calculateSchedule(Optional<Proposal> proposal) {
 
     // TODO: what if timeslot is empty?
     if (proposal.isPresent()) {
@@ -101,11 +98,10 @@ public class TalkHaikusConsumer extends Consumer {
       ZonedDateTime belgiumTime = timeslot.fromDate().atZone(belgiumZone);
 
       var now = Instant.now().truncatedTo(ChronoUnit.MINUTES);
-      var durationUntilTalk = Duration.between(now, belgiumTime.toInstant());
-      return durationUntilTalk.minus(Duration.ofMinutes(45));
+      return belgiumTime.toInstant().minus(Duration.ofMinutes(45));
 
     } else {
-      return Duration.ofSeconds(20);
+      return Instant.now().plus(Duration.ofSeconds(20));
     }
   }
 
