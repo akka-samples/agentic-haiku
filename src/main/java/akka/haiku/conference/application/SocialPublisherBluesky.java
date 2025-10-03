@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public class SocialPublisherBlueSky implements SocialPublisher {
-  private static final Logger log = LoggerFactory.getLogger(SocialPublisherBlueSky.class);
+public class SocialPublisherBluesky implements SocialPublisher {
+  private static final Logger log = LoggerFactory.getLogger(SocialPublisherBluesky.class);
 
 
   private final Config config;
@@ -24,7 +24,7 @@ public class SocialPublisherBlueSky implements SocialPublisher {
   record Session(String accessJwt, String did) {
   }
 
-  public SocialPublisherBlueSky(Config config, HttpClient httpClient, String identifier, String password) {
+  public SocialPublisherBluesky(Config config, HttpClient httpClient, String identifier, String password) {
     this.config = config;
     this.httpClient = httpClient;
     this.identifier = identifier;
@@ -54,12 +54,11 @@ public class SocialPublisherBlueSky implements SocialPublisher {
                   String did = cleanHandle.startsWith("did:") ? cleanHandle : resolveDidForHandle(cleanHandle);
                   if (did != null && !did.isBlank()) {
                     String mentionText = "@" + cleanHandle;
-                    post
-                      .append(mentionText)
-                      .append(separator);
+                    int start = post.length(); // before appending mention
+                    post.append(mentionText);
+                    int end = start + mentionText.length(); // only the mention
+                    post.append(separator); // append separator after
 
-                    int start = post.length() - mentionText.length();
-                    int end = post.length();
                     Map<String, Object> index = new HashMap<>();
                     index.put("byteStart", start);
                     index.put("byteEnd", end);
@@ -79,10 +78,9 @@ public class SocialPublisherBlueSky implements SocialPublisher {
           var messages = config.getStringList("haiku.best-wishes");
           int randomIndex = new Random().nextInt(messages.size());
           post.append(messages.get(randomIndex));
-          post.append("\n");
           // two lines to clearly separate it from the haiku
           post.append("\n\n");
-          post.append(message);
+          post.append(message); // here comes the haiku
 
           // Append tags as hashtags, ensuring correct formatting and collect facets
           if (tags != null && !tags.isEmpty()) {
