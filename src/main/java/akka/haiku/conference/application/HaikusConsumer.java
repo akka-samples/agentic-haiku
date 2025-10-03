@@ -15,7 +15,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -66,26 +65,32 @@ public class HaikusConsumer extends Consumer {
             .toList()
         ).orElseGet(List::of);
 
-        var scheduleTime = calculateSchedule(proposal);
 
-        var post = SocialPostEntity.SocialPostState.of(
-          haikuGen.haiku().get().formatted(),
-          haikuGen.image().get().url(),
-          contextTags(proposal),
-          names,
-          blueskyUsers,
-          scheduleTime);
+        if (haikuGen.haiku().isPresent() && haikuGen.image().isPresent()) {
 
-          logger.info("Creating post for: {}.", haikuGen.haikuId());
+          var scheduleTime =
+            calculateSchedule(proposal)
+              .orElse(Instant.now().plus(Duration.ofSeconds(20)));
 
-          String postId = haikuGen.haikuId().isTalk() ?
-            haikuGen.haikuId().extractTalkId() :
-            haikuGen.haikuId().id();
+          var post = SocialPostEntity.SocialPostState.of(
+            haikuGen.haiku().get().formatted(),
+            haikuGen.image().get().url(),
+            contextTags(proposal),
+            names,
+            blueskyUsers,
+            scheduleTime);
 
-          componentClient
-            .forKeyValueEntity(postId)
-            .method(SocialPostEntity::createPost)
-            .invoke(post);
+            logger.info("Creating post for: {}.", haikuGen.haikuId());
+
+            String postId = haikuGen.haikuId().isTalk() ?
+              haikuGen.haikuId().extractTalkId() :
+              haikuGen.haikuId().id();
+
+            componentClient
+              .forKeyValueEntity(postId)
+              .method(SocialPostEntity::createPost)
+              .invoke(post);
+        }
 
       } catch (Exception e) {
         logger.error("Error fetching haiku: {}", haikuGen.haikuId(), e);
@@ -98,29 +103,30 @@ public class HaikusConsumer extends Consumer {
 
   }
 
-  private Instant calculateSchedule(Optional<Proposal> proposal) {
-
-    // TODO: what if timeslot is empty?
-    if (proposal.isPresent()) {
-      var timeslot = proposal.get().timeSlots().getFirst();
+  private Optional<Instant> calculateSchedule(Optional<Proposal> proposalOpt) {
+    return proposalOpt.flatMap( proposal -> {
+      if (proposal.timeSlots().isEmpty()) { return Optional.empty(); }
+      else {
+      var timeslot = proposal.timeSlots().getFirst();
       ZoneId belgiumZone = ZoneId.of(timeslot.timezone());
       ZonedDateTime belgiumTime = timeslot.fromDate().atZone(belgiumZone);
-      return belgiumTime.toInstant().minus(Duration.ofMinutes(45));
 
-    } else {
-      return Instant.now().plus(Duration.ofSeconds(20));
-    }
+      // randomly throttling schedule to avoid being detected as spammer by bsky
+      int randomMinutes = 20 + (int) (Math.random() * 31); // 20 to 50 inclusive
+      return Optional.of(belgiumTime.toInstant().minus(Duration.ofMinutes(randomMinutes)));
+      }
+    });
   }
 
   private List<String> contextTags(Optional<Proposal> proposal) {
     if (proposal.isPresent()) {
         if (proposal.get().timeSlots().isEmpty()) {
         var room = proposal.get().timeSlots().getFirst().roomName();
-        return List.of("akka", room.replace(" ", "").toLowerCase());
+        return List.of("Akka", room.replace(" ", "").toLowerCase());
       }
     }
 
-    return List.of("akka");
+    return List.of("Akka");
   }
 
   private Proposal fetchProposal(String proposalId) {
