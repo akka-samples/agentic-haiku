@@ -17,6 +17,7 @@ public class SocialPostView extends View {
                               String post,
                               String url,
                               List<String> tags,
+                              List<String> names,
                               List<String> bskyHandlers,
                               Instant scheduleTime) {
   }
@@ -33,6 +34,7 @@ public class SocialPostView extends View {
             state.post(),
             state.imageUrl(),
             state.tags(),
+            state.names(),
             state.bskyHandlers(),
             state.scheduleTime());
             return effects().updateRow(row);

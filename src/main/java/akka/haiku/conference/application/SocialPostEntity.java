@@ -6,7 +6,6 @@ import akka.javasdk.keyvalueentity.KeyValueEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
@@ -19,6 +18,7 @@ public class SocialPostEntity extends KeyValueEntity<SocialPostEntity.SocialPost
   public record SocialPostState(String post,
                                 String imageUrl,
                                 List<String> tags,
+                                List<String> names,
                                 List<String> bskyHandlers,
                                 Instant scheduleTime, Status status
   ) {
@@ -42,17 +42,18 @@ public class SocialPostEntity extends KeyValueEntity<SocialPostEntity.SocialPost
       APPROVED
     }
     public static SocialPostState of(String post, String imageUrl, List<String> tags,
+                                     List<String> names,
                                      List<String> bskyHandlers, Instant scheduledTime) {
-      return new SocialPostState(post, imageUrl, tags, bskyHandlers, scheduledTime, Status.CREATED);
+      return new SocialPostState(post, imageUrl, tags, names, bskyHandlers, scheduledTime, Status.CREATED);
       }
 
 
       public SocialPostState asRejected() {
-        return new SocialPostState(post, imageUrl, tags,  bskyHandlers, scheduleTime, Status.REJECTED);
+        return new SocialPostState(post, imageUrl, tags, names, bskyHandlers, scheduleTime, Status.REJECTED);
       }
 
     public SocialPostState asApproved() {
-      return new SocialPostState(post, imageUrl, tags, bskyHandlers, scheduleTime, Status.APPROVED);
+      return new SocialPostState(post, imageUrl, tags, names, bskyHandlers, scheduleTime, Status.APPROVED);
     }
 
   }

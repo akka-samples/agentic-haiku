@@ -72,8 +72,11 @@ public class Bootstrap implements ServiceSetup {
         System.getenv("BSKY_PASSWORD")
       );
     } else {
-      socialPublisher = new SocialPublisherLogger();
+      socialPublisher = new SocialPublisherLogger(config);
     }
+
+    log.debug("Running with social publisher '{}'",  socialPublisher.getClass().getSimpleName());
+
     return new DependencyProvider() { // <3>
       @Override
       public <T> T getDependency(Class<T> clazz) {
