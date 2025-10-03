@@ -2,7 +2,7 @@ package akka.haiku;
 
 import akka.haiku.conference.application.ScheduleScanner;
 import akka.haiku.conference.application.SocialPublisher;
-import akka.haiku.conference.application.SocialPublisherBlueSky;
+import akka.haiku.conference.application.SocialPublisherBluesky;
 import akka.haiku.conference.application.SocialPublisherLogger;
 import akka.haiku.gateway.application.QrCodeGenerator;
 import akka.haiku.gateway.application.TokenGroupEntity;
@@ -65,7 +65,7 @@ public class Bootstrap implements ServiceSetup {
 
     SocialPublisher socialPublisher;
     if (System.getenv("BSKY_USER") != null) {
-      socialPublisher = new SocialPublisherBlueSky(
+      socialPublisher = new SocialPublisherBluesky(
         config,
         httpClientProvider.httpClientFor("https://bsky.social"),
         System.getenv("BSKY_USER"),

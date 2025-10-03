@@ -3,6 +3,7 @@ package akka.haiku.conference.api;
 import akka.Done;
 import akka.haiku.conference.application.SocialPostEntity;
 import akka.haiku.conference.application.SocialPostView;
+import akka.haiku.conference.application.SocialPublisher;
 import akka.http.javadsl.model.HttpResponse;
 import akka.javasdk.annotations.http.Get;
 import akka.javasdk.annotations.http.HttpEndpoint;
@@ -17,11 +18,14 @@ public class SocialPostsEndpoint {
 
 
   private final ComponentClient componentClient;
+  private final SocialPublisher socialPublisher;
   private Logger log =  LoggerFactory.getLogger(SocialPostsEndpoint.class);
 
 
-  public SocialPostsEndpoint(ComponentClient componentClient) {
+
+  public SocialPostsEndpoint(ComponentClient componentClient, SocialPublisher socialPublisher) {
     this.componentClient = componentClient;
+    this.socialPublisher = socialPublisher;
   }
 
 
@@ -47,5 +51,20 @@ public class SocialPostsEndpoint {
     return componentClient
       .forKeyValueEntity(postId).method(SocialPostEntity::approvePost)
       .invoke();
+  }
+
+  /**
+   * Backdoor to force premature publishing. Useful for testing.
+   * Only available in dev-mode or through 'akka service proxy'
+   */
+  @Post("/{postId}/publish")
+  public void publish(String postId) {
+
+    var post =
+      componentClient
+        .forKeyValueEntity(postId)
+        .method(SocialPostEntity::getPost).invoke();
+
+    socialPublisher.publish(post.post(), post.imageUrl(), post.tags(), post.names(), post.bskyHandlers());
   }
 }
