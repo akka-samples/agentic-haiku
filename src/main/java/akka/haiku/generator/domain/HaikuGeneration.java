@@ -35,6 +35,10 @@ public record HaikuGeneration(HaikuId haikuId,
     return new HaikuGeneration(haikuId, userInput, Instant.now().toEpochMilli(), HAIKU_GENERATED, Optional.of(haiku), image);
   }
 
+  public boolean hasImage() {
+    return image.isPresent();
+  }
+
   public boolean isComplete() {
     return haiku.isPresent() && image.isPresent();
   }

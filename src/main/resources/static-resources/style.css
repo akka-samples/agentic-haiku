@@ -532,6 +532,10 @@ body {
     display: inline-block;
 }
 
+.has-image .blinking-dots {
+    display: none !important;
+}
+
 .carousel-navigation {
     display: flex;
     align-items: center;

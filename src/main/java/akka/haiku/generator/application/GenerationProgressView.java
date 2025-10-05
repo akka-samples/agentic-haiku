@@ -7,12 +7,16 @@ import akka.javasdk.annotations.Consume;
 import akka.javasdk.annotations.Query;
 import akka.javasdk.view.TableUpdater;
 import akka.javasdk.view.View;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Stream;
 
 @ComponentId("generation-progress-view")
 public class GenerationProgressView extends View {
+
+  private static final Logger log = LoggerFactory.getLogger(GenerationProgressView.class);
 
   public record Progress(String haikuId, boolean completed, List<String> lines) {
     public Progress addLines(List<String> progressLines) {
@@ -38,14 +42,18 @@ public class GenerationProgressView extends View {
           return effects().ignore();
         }
         var id = updateContext().eventSubject().get();
-        return effects().updateRow(new Progress(id, false, toProgressLines(haikuGeneration.status())));
+        var lines = toProgressLines(haikuGeneration.status());
+        log.debug("creating with lines: {}", lines.toString());
+        return effects().updateRow(new Progress(id, false, lines));
       } else {
         if (haikuGeneration.status() == null) { //backward compatibility, remove when deploying final version
           return effects().ignore();
         }
+        var lines = toProgressLines(haikuGeneration.status());
+        log.debug("adding lines: {}", lines.toString());
         return effects().updateRow(rowState()
-          .addLines(toProgressLines(haikuGeneration.status()))
-          .setCompleted(haikuGeneration.isComplete()));
+          .addLines(lines)
+          .setCompleted(haikuGeneration.hasImage()));
       }
     }
   }

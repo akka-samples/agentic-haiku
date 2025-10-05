@@ -154,6 +154,9 @@
                 // Create an array to store progress messages
                 this.progressLines = [];
 
+                // Remove has-image class for new generation
+                this.haikuDisplay.classList.remove('has-image');
+
                 // Handle incoming events
                 this.haikuEventSource.onmessage = (event) => {
                     // Each event.data is a plain text string (not JSON)
@@ -197,8 +200,13 @@
                 // Clear progress lines to remove blinking dots
                 this.progressLines = [];
 
-                // Display the haiku if available
+                // If a user message is present (e.g., for rejected/toxic input), show it
+                if (haikuData.message) {
+                    this.haikuText.innerHTML = `<div class="haiku-line" style="color: #b85c00;">${this.escapeHtml(haikuData.message)}</div>`;
+                }
+
                 if (haikuData.haiku) {
+                    // Display the haiku if available
                     let haikuHtml = '<div class="haiku">';
                     if (haikuData.haiku.line1) {
                         haikuHtml += `<div class='haiku-line'>${this.escapeHtml(haikuData.haiku.line1)}</div>`;
@@ -213,8 +221,12 @@
                     this.haikuText.innerHTML = haikuHtml;
                 }
 
-                // Display the image if available
+                // Always show the image if present
                 if (haikuData.image && haikuData.image.url) {
+                    this.finalHaikuDisplayed = true;
+                    this.progressLines = [];
+                    // Add has-image class when image is present
+                    this.haikuDisplay.classList.add('has-image');
                     this.imageContainer.innerHTML = `<img src='${this.escapeHtml(haikuData.image.url)}' alt='Generated image' class='generated-image' />`;
                 } else {
                     this.imageContainer.innerHTML = '<div class="no-content">No image was generated</div>';
@@ -250,7 +262,7 @@
                     this.haikuText.innerHTML = '<div class="haiku-line" style="text-align: left;">Waiting for generation progress<span class="blinking-dots">...</span></div>';
                 }
 
-                // Auto-scroll to the bottom of the container to show latest progress
+                // Auto-scroll to the bottom of the container to show the latest progress
                 this.haikuText.scrollTop = this.haikuText.scrollHeight;
             }
 
