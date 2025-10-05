@@ -7,15 +7,15 @@
     <version>3.5.3</version>
   </parent>
   
-  <groupId>akka.haiku</groupId>
-  <artifactId>akka-haiku</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <groupId>akka.agentic.haiku</groupId>
+  <artifactId>agentic-haiku</artifactId>
+  <version>1.0.0</version>
   <packaging>jar</packaging>
 
-  <name>akka-haiku</name>
+  <name>agentic-haiku</name>
 
   <properties>
-    <docker.image>kcr.us-east-1.kalix.io/lightbend-eng/devoxx-be/akka-haiku</docker.image>
+    <docker.image>kcr.us-east-1.kalix.io/lightbend-eng/devoxx-be/agentic-haiku</docker.image>
   </properties>
 
   <dependencyManagement>
