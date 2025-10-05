@@ -27,7 +27,7 @@ service:
       secretKeyRef:
         name: bluesky
         key: pwd
-  image: kcr.us-east-1.kalix.io/lightbend-eng/devoxx-be/akka-haiku:1.0-SNAPSHOT-20251002191507
+  image: kcr.us-east-1.kalix.io/lightbend-eng/devoxx-be/akka-haiku:1.0-SNAPSHOT-20251003212826
   resources:
     runtime:
       mode: embedded
