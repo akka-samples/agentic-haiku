@@ -39,12 +39,14 @@ public class GeminiImageGenerator implements ImageGenerator {
     try {
       String projectId = "akka-dev-ai";
       String location = "us-central1";
-      String prompt = "Create a image inspired by this Haiku (between [])." +
-                "[" + haiku + "]" +
-                "The image should be in the style of a Japanese painting using light tones." +
-                "If text is included in the image, it must strictly be part of the haiku. " +
-                "No other text should be included" +
-                "\n The Haiku itself was generated based on this input: \n" + userInput;
+      String prompt = "A **traditional Japanese painting** in **light, gentle tones**. " +
+        "The scene is **inspired by the feeling of the Haiku**: '" + haiku + "'. " +
+        "Absolutely no writing, letters, words, or text should appear on the image. " +
+        "(The Haiku itself was generated based on this input: '" + userInput + "'";
+
+      String negativePrompt = "watermark, logo, signage, numbers, captions, illegible text, " +
+        "garbled text, out of place text, text on objects";
+
 
 
       String endpoint = String.format("%s-aiplatform.googleapis.com:443", location);
@@ -62,6 +64,7 @@ public class GeminiImageGenerator implements ImageGenerator {
 
         Map<String, Object> instancesMap = new HashMap<>();
         instancesMap.put("prompt", prompt);
+        instancesMap.put("negativePrompt", negativePrompt);
         Value instances = mapToValue(instancesMap);
 
         Map<String, Object> paramsMap = new HashMap<>();
@@ -72,7 +75,7 @@ public class GeminiImageGenerator implements ImageGenerator {
         paramsMap.put("aspectRatio", "1:1");
         paramsMap.put("sampleImageSize", "1k");
         paramsMap.put("safetyFilterLevel", "block_some");
-        paramsMap.put("personGeneration", "allow_adult");
+        paramsMap.put("personGeneration", "dont_allow");
         paramsMap.put("mimeType", "image/jpeg");
         paramsMap.put("compressionQuality", "60");
         paramsMap.put("outputOptions.mimeType", "image/jpeg"); // Request JPEG output from the model
