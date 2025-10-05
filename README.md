@@ -1,5 +1,6 @@
 # Agentic Haiku - Haiku and Image Generation Service
 
+
 ## Running Locally with Postgres and Jaeger
 
 First start a local Jaeger and Postgres in docker using the prepared docker compose file:
