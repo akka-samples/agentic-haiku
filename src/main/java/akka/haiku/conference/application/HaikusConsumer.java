@@ -70,7 +70,7 @@ public class HaikusConsumer extends Consumer {
 
           var scheduleTime =
             calculateSchedule(proposal)
-              .orElse(Instant.now().plus(Duration.ofSeconds(20)));
+              .orElse(Instant.now().plus(Duration.ofMinutes(10)));
 
           var post = SocialPostEntity.SocialPostState.of(
             haikuGen.haiku().get().formatted(),
@@ -122,11 +122,11 @@ public class HaikusConsumer extends Consumer {
     if (proposal.isPresent()) {
         if (proposal.get().timeSlots().isEmpty()) {
         var room = proposal.get().timeSlots().getFirst().roomName();
-        return List.of("Akka", room.replace(" ", "").toLowerCase());
+        return List.of("Devoxx", "Akka", room.replace(" ", "").toLowerCase());
       }
     }
 
-    return List.of("Akka");
+    return List.of("Devoxx", "Akka");
   }
 
   private Proposal fetchProposal(String proposalId) {
