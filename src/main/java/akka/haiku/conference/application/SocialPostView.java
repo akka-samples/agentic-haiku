@@ -3,6 +3,7 @@ package akka.haiku.conference.application;
 import akka.haiku.conference.application.SocialPostEntity.SocialPostState;
 import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.annotations.Consume;
+import akka.javasdk.annotations.DeleteHandler;
 import akka.javasdk.annotations.Query;
 import akka.javasdk.view.TableUpdater;
 import akka.javasdk.view.View;
@@ -43,6 +44,11 @@ public class SocialPostView extends View {
             // once the post is rejected, approved or published, it's removed
             return effects().deleteRow();
         }
+      }
+
+      @DeleteHandler
+      public Effect<SocialPostRow> onDelete() {
+        return effects().deleteRow();
       }
     }
 

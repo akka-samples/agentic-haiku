@@ -22,12 +22,16 @@ public class SocialPublisherLogger implements SocialPublisher {
     var separator = "----------------------------------------\n";
     StringBuilder stringBuilder = new StringBuilder(separator);
 
+
     names.forEach(name -> stringBuilder.append(name).append("\n"));
     handlers.forEach(handler -> stringBuilder.append(handler).append(", "));
-    var messages = config.getStringList("haiku.best-wishes");
-    int randomIndex = new Random().nextInt(messages.size());
-    stringBuilder.append(messages.get(randomIndex));
-    stringBuilder.append("\n\n");
+
+    if (!names.isEmpty() || !handlers.isEmpty()) {
+      var messages = config.getStringList("haiku.best-wishes");
+      int randomIndex = new Random().nextInt(messages.size());
+      stringBuilder.append(messages.get(randomIndex));
+      stringBuilder.append("\n\n");
+    }
 
     stringBuilder.append(message);
     stringBuilder.append("\n");

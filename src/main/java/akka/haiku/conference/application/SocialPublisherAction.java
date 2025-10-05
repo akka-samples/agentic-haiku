@@ -21,21 +21,25 @@ public class SocialPublisherAction extends TimedAction {
   }
 
   public Effect publishSocialPost(String postId) {
-    var post =
-      componentClient
-        .forKeyValueEntity(postId)
-        .method(SocialPostEntity::getPost).invoke();
+    try {
+      var post =
+        componentClient
+          .forKeyValueEntity(postId)
+          .method(SocialPostEntity::getPost).invoke();
 
-    if (post.notRejected()) {
-      log.debug("Publishing on BlueSky platform {}, handlers [{}]", postId, post.bskyHandlers());
-      socialPublisher.publish(post.post(), post.imageUrl(), post.tags(), post.names(), post.bskyHandlers());
+      if (post.notRejected()) {
+        log.debug("Publishing on BlueSky platform {}, handlers [{}]", postId, post.bskyHandlers());
+        socialPublisher.publish(post.post(), post.imageUrl(), post.tags(), post.names(), post.bskyHandlers());
 
-      // if we publish it, we mark it as approve so it is removed from the queue list
-      componentClient
-        .forKeyValueEntity(postId)
-        .method(SocialPostEntity::approvePost).invoke();
+        // if we publish it, we mark it as approve so it is removed from the queue list
+        componentClient
+          .forKeyValueEntity(postId)
+          .method(SocialPostEntity::approvePost).invoke();
+      }
+
+    } catch (PostNotFoundException e) {
+      return effects().done();
     }
-
     return effects().done();
   }
 }

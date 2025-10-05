@@ -3,6 +3,7 @@ package akka.haiku.conference.application;
 
 import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.annotations.Consume;
+import akka.javasdk.annotations.DeleteHandler;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.consumer.Consumer;
 import akka.javasdk.timer.TimerScheduler;
@@ -44,6 +45,13 @@ public class SocialPostConsumer extends Consumer {
         );
     }
 
+    return effects().done();
+  }
+
+  @DeleteHandler
+  public Effect onDelete() {
+    var postId = messageContext().eventSubject().get();
+    scheduler.delete(postId);
     return effects().done();
   }
 }
