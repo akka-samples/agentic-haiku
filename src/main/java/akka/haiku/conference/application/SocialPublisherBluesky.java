@@ -41,12 +41,11 @@ public class SocialPublisherBluesky implements SocialPublisher {
           List<Map<String, Object>> facets = new java.util.ArrayList<>();
           var separator = ", ";
 
-          names.forEach(name -> post.append(name).append(separator));
           // Add mentions to post and facets
-          // only add mentions when posting from official account
+          // only add mentions when posting from the official account
           if (identifier.equals("akka.io")) {
-            if (handlers != null && !handlers.isEmpty()) {
-
+            names.forEach(name -> post.append(name).append(separator));
+            if (!handlers.isEmpty()) {
               for (String handler : handlers) {
                 if (handler != null && !handler.isBlank()) {
                   String cleanHandle = handler.replace("@", "").trim();
@@ -70,20 +69,23 @@ public class SocialPublisherBluesky implements SocialPublisher {
                     facet.put("features", List.of(feature));
                     facets.add(facet);
                   }
+                }
               }
             }
+            if (!names.isEmpty() || !handlers.isEmpty()) {
+              // after the handlers and name, we add the message
+              var messages = config.getStringList("haiku.best-wishes");
+              int randomIndex = new Random().nextInt(messages.size());
+              post.append(messages.get(randomIndex));
+              // two lines to clearly separate it from the haiku
+              post.append("\n\n");
+            }
           }
-        }
-          // after the handlers and name, we add the message
-          var messages = config.getStringList("haiku.best-wishes");
-          int randomIndex = new Random().nextInt(messages.size());
-          post.append(messages.get(randomIndex));
-          // two lines to clearly separate it from the haiku
-          post.append("\n\n");
+
           post.append(message); // here comes the haiku
 
           // Append tags as hashtags, ensuring correct formatting and collect facets
-          if (tags != null && !tags.isEmpty()) {
+          if (!tags.isEmpty()) {
             post.append("\n");
             for (String tag : tags) {
               if (tag != null && !tag.isBlank()) {
