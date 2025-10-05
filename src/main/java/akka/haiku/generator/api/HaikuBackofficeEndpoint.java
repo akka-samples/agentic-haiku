@@ -11,7 +11,6 @@ import akka.javasdk.http.HttpResponses;
 
 import java.util.List;
 
-//@Acl(allow = @Acl.Matcher(principal = Acl.Principal.INTERNET))
 @HttpEndpoint("/haikus-backoffice")
 public record HaikuBackofficeEndpoint(ComponentClient componentClient) {
 
