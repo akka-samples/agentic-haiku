@@ -49,9 +49,9 @@ public record HaikusEndpoint(ComponentClient componentClient, Materializer mater
   @Get("/{haikuId}/progress")
   public HttpResponse getHaikuGenProgress(String haikuId) {
 
+    log.debug("Start to stream haiku generation progress for {}", haikuId);
     var queueAndSrc =
-      Source
-        .<String>queue(20).preMaterialize(materializer);
+      Source.<String>queue(20).preMaterialize(materializer);
 
     var queue = queueAndSrc.first();
     var src = queueAndSrc.second();
@@ -70,6 +70,9 @@ public record HaikusEndpoint(ComponentClient componentClient, Materializer mater
 
       var progressMessages = state.lines();
       var size = progressMessages.size();
+
+      log.debug("progress view state {}", state);
+      log.debug("progress messages {}", progressMessages);
 
       int publishedCount = publishedIndex.get();
 

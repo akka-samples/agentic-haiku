@@ -2,8 +2,10 @@ package akka.haiku.conference.application;
 
 import akka.haiku.generator.application.HaikuGenerationWorkflow;
 import akka.haiku.generator.domain.HaikuGeneration;
+import akka.haiku.generator.domain.HaikuId;
 import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.annotations.Consume;
+import akka.javasdk.annotations.DeleteHandler;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.consumer.Consumer;
 import akka.javasdk.http.HttpClient;
@@ -82,12 +84,8 @@ public class HaikusConsumer extends Consumer {
 
             logger.info("Creating post for: {}.", haikuGen.haikuId());
 
-            String postId = haikuGen.haikuId().isTalk() ?
-              haikuGen.haikuId().extractTalkId() :
-              haikuGen.haikuId().id();
-
             componentClient
-              .forKeyValueEntity(postId)
+              .forKeyValueEntity(haikuGen.haikuId().id())
               .method(SocialPostEntity::createPost)
               .invoke(post);
         }
@@ -101,6 +99,17 @@ public class HaikusConsumer extends Consumer {
 
     return effects().ignore();
 
+  }
+
+  @DeleteHandler
+  public Effect onDelete() {
+    var id = messageContext().eventSubject().get();
+    componentClient
+      .forKeyValueEntity(id)
+      .method(SocialPostEntity::delete)
+      .invoke();
+
+    return effects().done();
   }
 
   private Optional<Instant> calculateSchedule(Optional<Proposal> proposalOpt) {

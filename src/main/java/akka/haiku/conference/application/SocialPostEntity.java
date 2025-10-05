@@ -67,7 +67,7 @@ public class SocialPostEntity extends KeyValueEntity<SocialPostEntity.SocialPost
   public Effect<SocialPostState> getPost() {
     SocialPostState state = currentState();
     if (state == null) {
-      return effects().error("Post not found: " + commandContext().entityId());
+      return effects().error(new PostNotFoundException("Post not found: " + commandContext().entityId()));
     } else {
       return effects().reply(state);
     }
@@ -93,4 +93,7 @@ public class SocialPostEntity extends KeyValueEntity<SocialPostEntity.SocialPost
         .thenReply(Done.done());
     }
 
+  public Effect<Done> delete() {
+    return effects().deleteEntity().thenReply(Done.done());
+  }
 }
