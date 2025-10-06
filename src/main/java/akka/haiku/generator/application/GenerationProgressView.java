@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 @ComponentId("generation-progress-view")
@@ -29,7 +30,7 @@ public class GenerationProgressView extends View {
   }
 
   @Query("SELECT * from generation_progress WHERE haikuId = :haikuId")
-  public QueryEffect<Progress> get(String haikuId) {
+  public QueryEffect<Optional<Progress>> get(String haikuId) {
     return queryResult();
   }
 
