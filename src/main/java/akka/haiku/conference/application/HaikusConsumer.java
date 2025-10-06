@@ -2,7 +2,6 @@ package akka.haiku.conference.application;
 
 import akka.haiku.generator.application.HaikuGenerationWorkflow;
 import akka.haiku.generator.domain.HaikuGeneration;
-import akka.haiku.generator.domain.HaikuId;
 import akka.javasdk.annotations.ComponentId;
 import akka.javasdk.annotations.Consume;
 import akka.javasdk.annotations.DeleteHandler;
@@ -70,24 +69,31 @@ public class HaikusConsumer extends Consumer {
 
         if (haikuGen.haiku().isPresent() && haikuGen.image().isPresent()) {
 
+          var now = Instant.now();
           var scheduleTime =
             calculateSchedule(proposal)
-              .orElse(Instant.now().plus(Duration.ofMinutes(10)));
+              .orElse(now.plus(Duration.ofMinutes(10)));
 
-          var post = SocialPostEntity.SocialPostState.of(
-            haikuGen.haiku().get().formatted(),
-            haikuGen.image().get().url(),
-            contextTags(proposal),
-            names,
-            blueskyUsers,
-            scheduleTime);
+          if (scheduleTime.isBefore(now)) {
+              var post = SocialPostEntity.SocialPostState.of(
+                haikuGen.haiku().get().formatted(),
+                haikuGen.image().get().url(),
+                contextTags(proposal),
+                names,
+                blueskyUsers,
+                scheduleTime);
 
-            logger.info("Creating post for: {}.", haikuGen.haikuId());
+              logger.info("Creating post for: {}.", haikuGen.haikuId());
 
-            componentClient
-              .forKeyValueEntity(haikuGen.haikuId().id())
-              .method(SocialPostEntity::createPost)
-              .invoke(post);
+              componentClient
+                .forKeyValueEntity(haikuGen.haikuId().id())
+                .method(SocialPostEntity::createPost)
+                .invoke(post);
+          } else {
+            // only happens for talks and if we accidentally schedule the wrong day
+            logger.info("Skipping post creation. Event has passed already {}.", proposal);
+          }
+
         }
 
       } catch (Exception e) {
