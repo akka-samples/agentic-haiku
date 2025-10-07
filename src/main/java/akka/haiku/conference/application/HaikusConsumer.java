@@ -129,7 +129,7 @@ public class HaikusConsumer extends Consumer {
 
   private List<String> contextTags(Optional<Proposal> proposal) {
     if (proposal.isPresent()) {
-        if (proposal.get().timeSlots().isEmpty()) {
+        if (!proposal.get().timeSlots().isEmpty()) {
         var room = proposal.get().timeSlots().getFirst().roomName();
         return List.of("Devoxx", "Akka", room.replace(" ", "").toLowerCase());
       }
