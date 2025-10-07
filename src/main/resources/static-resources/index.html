@@ -6,7 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Agentic Haiku</title>
+    <title>Generated Haiku</title>
     <link rel="stylesheet" href="static/style.css">
 </head>
 <body>
@@ -16,7 +16,10 @@
             <div class="left-half">
                 <div class="banner-content">
                     <div class="banner-left">
-                        <div class="banner-header">Agentic Haiku</div>
+                        <div class="banner-header">
+                            <img class="banner-logo" src="static/img/akka-logo-white-large.png" alt="Akka"/>
+                        </div>
+                        <div class="banner-header">Haiku generator</div>
                         <div class="highlight-message">
                             What's on <span style="color: #ffce4a;">your mind</span>?
                             <br/><span style="color: #ffce4a;">Scan here</span> to transform your <span
@@ -115,7 +118,7 @@
                 this.currentIndex = 0;
                 this.autoPlayInterval = null;
                 this.autoPlayDelay = 5000; // 5 seconds
-                this.maxItems = 50; // Cap carousel to 50 items
+                this.maxItems = 10; // Cap carousel to 50 items
                 this.initializeCarousel();
                 this.connect();
             }

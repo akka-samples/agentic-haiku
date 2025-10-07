@@ -45,6 +45,7 @@ body {
     flex-direction: column;
     padding: 40px;
     box-sizing: border-box;
+    justify-content: flex-start;
 }
 
 .right-half {
@@ -106,7 +107,12 @@ body {
     font-size: 15px;
     transition: border-color 0.2s;
     background: #242424;
-    color: #f5f6fa;
+    color: #fff; /* Ensure initial text is white */
+}
+
+.input-field::placeholder {
+    color: #fff;
+    opacity: 1;
 }
 
 .input-field:focus {
@@ -449,11 +455,19 @@ body {
     animation: spin 1s linear infinite;
 }
 
+.banner-logo {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin-top: 0;
+    padding-bottom: 24px;
+}
+
 .banner-content {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    justify-content: center;
+    justify-content: flex-start;
     flex: 1;
     gap: 40px;
 }
@@ -475,6 +489,8 @@ body {
     margin-bottom: 0;
     background: none;
     line-height: 0.9;
+    padding-top: 16px;
+    padding-bottom: 16px;
 }
 
 .highlight-message {
@@ -559,7 +575,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2px;
+    padding: 6px;
 }
 
 .carousel-btn:hover {
@@ -688,6 +704,7 @@ body {
         width: 100%;
         padding: 16px !important;
         font-size: 1.1rem !important;
+
         border-radius: 8px;
         box-sizing: border-box;
     }
