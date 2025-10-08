@@ -27,7 +27,7 @@ service:
       secretKeyRef:
         name: bluesky
         key: pwd
-  image: kcr.us-east-1.kalix.io/lightbend-eng/devoxx-be/agentic-haiku:1.0.1-SNAPSHOT-20251007194310
+  image: kcr.us-east-1.kalix.io/lightbend-eng/devoxx-be/agentic-haiku:1.0.1-SNAPSHOT-20251008072411
   resources:
     runtime:
       mode: embedded
