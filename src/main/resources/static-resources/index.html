@@ -133,7 +133,9 @@
                             const haikuObj = JSON.parse(event.data);
                             this.handleHaiku(haikuObj);
                         } catch (e) {
-                            console.error('Error parsing haiku:', e);
+                            console.error('Error parsing haiku JSON, ignoring:', e, 'Raw data:', event.data);
+                            // Simply ignore unparsable data, don't affect the carousel
+                            return;
                         }
                     };
                     this.eventSource.onerror = (err) => {
@@ -195,8 +197,8 @@
                         }
                     }
 
-                    // Reset to beginning when new content arrives
-                    if (isNewHaiku) {
+                    // Reset to beginning when new content arrives, but only if it's truly new
+                    if (isNewHaiku && this.haikuMap.size > 1) {
                         this.currentIndex = 0;
                     }
                 }
@@ -270,6 +272,7 @@
                 this.haikuGrid.style.transform = `translateX(${translateX}%)`;
             }
             nextSlide() {
+                console.log("nextSlide");
                 const totalItems = this.haikuGrid.children.length;
                 if (totalItems > 0) {
                     this.currentIndex = (this.currentIndex + 1) % totalItems;
@@ -315,15 +318,23 @@
                 }
             }
             startAutoPlay() {
-                this.stopAutoPlay();
-                if (this.haikuGrid.children.length > 1) {
-                    this.autoPlayInterval = setInterval(() => {
+                // Don't restart if already running
+                // if (this.autoPlayInterval) {
+                //     return;
+                // }
+
+                this.autoPlayInterval = setInterval(() => {
+                    // Only advance if there are multiple items
+                    if (this.haikuGrid.children.length > 1) {
                         this.nextSlide();
-                    }, this.autoPlayDelay);
-                }
+                    }
+                }, this.autoPlayDelay);
+
+                console.log("Started auto-play with delay: " + this.autoPlayDelay);
             }
             stopAutoPlay() {
                 if (this.autoPlayInterval) {
+                    console.log("Stopping auto-play");
                     clearInterval(this.autoPlayInterval);
                     this.autoPlayInterval = null;
                 }
