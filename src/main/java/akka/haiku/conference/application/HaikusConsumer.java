@@ -74,7 +74,7 @@ public class HaikusConsumer extends Consumer {
             calculateSchedule(proposal)
               .orElse(now.plus(Duration.ofMinutes(10)));
 
-          if (scheduleTime.isBefore(now)) {
+          if (scheduleTime.isAfter(now)) {
               var post = SocialPostEntity.SocialPostState.of(
                 haikuGen.haiku().get().formatted(),
                 haikuGen.image().get().url(),
