@@ -56,4 +56,4 @@ jobs:
 
       - name: mvn verify
         run: |-
-          mvn -s .github/settings.xml verify --no-transfer-progress
+          mvn verify --no-transfer-progress
