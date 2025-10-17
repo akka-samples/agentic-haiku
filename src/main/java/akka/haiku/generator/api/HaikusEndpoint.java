@@ -1,23 +1,16 @@
 package akka.haiku.generator.api;
 
-import akka.haiku.generator.application.GenerationProgressView;
 import akka.haiku.generator.application.HaikuGenerationWorkflow;
-import akka.haiku.generator.application.HaikuView;
 import akka.http.javadsl.model.HttpResponse;
 import akka.javasdk.annotations.Acl;
 import akka.javasdk.annotations.http.Get;
 import akka.javasdk.annotations.http.HttpEndpoint;
+import akka.javasdk.annotations.http.Post;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.http.HttpResponses;
 import akka.stream.Materializer;
-import akka.stream.javadsl.Source;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.atomic.AtomicReference;
-
-import static java.time.Duration.ofMillis;
-import static java.time.Duration.ofSeconds;
 
 // Opened up for access from the public internet to make the service easy to try out.
 // For actual services meant for production this must be carefully considered,
@@ -28,83 +21,32 @@ public record HaikusEndpoint(ComponentClient componentClient, Materializer mater
 
   private static final Logger log = LoggerFactory.getLogger(HaikusEndpoint.class);
 
-  public record Input(String message) {}
+  public record Input(String text) {
+  }
+
+  @Post("/{haikuId}")
+  public HttpResponse create(String haikuId, Input input) {
+
+    componentClient.forWorkflow(haikuId)
+      .method(HaikuGenerationWorkflow::start)
+      .invoke(input.text);
+
+    return HttpResponses.ok();
+  }
 
   @Get("/{haikuId}")
-  public HaikuApiModel getHaiku(String haikuId) {
+  public HaikuResponse getHaiku(String haikuId) {
 
     var state =
       componentClient.forWorkflow(haikuId)
         .method(HaikuGenerationWorkflow::getState)
         .invoke();
 
-    return new HaikuApiModel(
+    return new HaikuResponse(
       haikuId,
       state.userInput(),
       state.generatedAt(),
       state.haiku(),
       state.image());
-  }
-
-  @Get("/{haikuId}/progress")
-  public HttpResponse getHaikuGenProgress(String haikuId) {
-
-    log.debug("Start to stream haiku generation progress for {}", haikuId);
-    var queueAndSrc =
-      Source.<String>queue(20).preMaterialize(materializer);
-
-    var queue = queueAndSrc.first();
-    var src = queueAndSrc.second();
-
-    AtomicReference<Integer> publishedIndex = new AtomicReference<>(0);
-
-    // a tick source to poll the workflow state
-    // workflow progress messages are pushed to a queue and sent as SSE to UI
-    Source.tick(ofMillis(500), ofSeconds(1), "tick").map(t -> {
-        log.trace("polling haiku gen state: {}", haikuId);
-
-        var progressOpt =
-          componentClient.forView()
-            .method(GenerationProgressView::get)
-            .invoke(haikuId);
-
-        log.debug("progress view state {}", progressOpt);
-
-        progressOpt.ifPresent(progress -> {
-          var progressMessages = progress.lines();
-          var size = progressMessages.size();
-
-          log.debug("progress messages {}", progressMessages);
-
-          int publishedCount = publishedIndex.get();
-
-          if (publishedCount < size) {
-            var messagesToPublish = progressMessages.subList(publishedCount, size);
-            // we publish one by one
-            queue.offer(messagesToPublish.getFirst());
-            publishedIndex.set(publishedCount + 1);
-          }
-
-          // completed and we published all messages?
-          if (progress.completed() && publishedCount == size) {
-            log.trace("closing queue");
-            queue.complete();
-          }
-        });
-
-        return t;
-      }
-    ).run(materializer);
-
-    return HttpResponses.serverSentEvents(src);
-  }
-
-  @Get
-  public HttpResponse realTimeContent() {
-    var haikus = componentClient.forView()
-      .stream(HaikuView::get)
-      .source();
-
-    return HttpResponses.serverSentEvents(haikus);
   }
 }

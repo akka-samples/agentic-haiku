@@ -2,9 +2,9 @@ package akka.haiku.generator.application;
 
 import akka.haiku.generator.domain.Haiku;
 import akka.javasdk.agent.Agent;
-import akka.javasdk.annotations.ComponentId;
+import akka.javasdk.annotations.Component;
 
-@ComponentId("haiku-generator")
+@Component(id = "haiku-generator")
 public class HaikuGenAgent extends Agent {
 
   private final String SYS_MESSAGE = """

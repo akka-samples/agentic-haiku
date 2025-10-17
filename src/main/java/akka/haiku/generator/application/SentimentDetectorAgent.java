@@ -1,13 +1,15 @@
 package akka.haiku.generator.application;
 
-import akka.haiku.generator.domain.UserInput;
 import akka.javasdk.agent.Agent;
 import akka.javasdk.agent.MemoryProvider;
-import akka.javasdk.annotations.ComponentId;
+import akka.javasdk.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@ComponentId("sentiment-analysis")
+import static akka.haiku.generator.application.ContentEvaluationResult.notPassedResult;
+import static akka.haiku.generator.application.ContentEvaluationResult.passedResult;
+
+@Component(id = "sentiment-analysis")
 public class SentimentDetectorAgent extends Agent {
 
 
@@ -24,24 +26,20 @@ public class SentimentDetectorAgent extends Agent {
     Do not provide explanations or additional text—only respond with one of the three options above.
     """;
 
-  public Effect<UserInput> analyseSentiment(UserInput input) {
+  public Effect<ContentEvaluationResult> analyseSentiment(String input) {
     return effects()
       .systemMessage(SYS_MESSAGE)
       // we don't want to save any content before we are able to decide if it's harmful or not
       .memory(MemoryProvider.none())
-      .userMessage(input.originalInput())
-      .map( res -> evaluatedAs(input, res))
+      .userMessage(input)
+      .map(res -> {
+        log.info("Sentiment detector agent analyse content: {}", res);
+        if ("NEGATIVE".equals(res)) {
+          return notPassedResult("Content is evaluated as: " + res);
+        }
+        return passedResult();
+      })
       .thenReply();
-  }
-
-  private UserInput evaluatedAs(UserInput input, String response) {
-    log.debug("evaluation result is '{}'", response);
-    try {
-      var eval = UserInput.Eval.valueOf(response);
-      return input.evaluatedAs(eval);
-    } catch (IllegalArgumentException e) {
-      return input.evaluatedAs(UserInput.Eval.UNKNOWN);
-    }
   }
 
 }

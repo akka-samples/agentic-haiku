@@ -1,4 +1,4 @@
-package akka.haiku.gateway.api;
+package akka.haiku.generator.api;
 
 import akka.http.javadsl.model.HttpRequest;
 import akka.http.javadsl.model.HttpResponse;
@@ -14,28 +14,6 @@ public class StaticResourcesEndpoint {
   @Get("/")
   public HttpResponse index() {
     return HttpResponses.staticResource("index.html");
-  }
-
-
-  @Get("/form")
-  public HttpResponse form() {
-    return HttpResponses.staticResource("form.html");
-  }
-
-  @Get("/scan-qr-code")
-  public HttpResponse scanQrCode() {
-    return HttpResponses.staticResource("scan-qr-code.html");
-  }
-
-  @Get("/audit")
-  public HttpResponse audit() {
-    return HttpResponses.staticResource("audit.html");
-  }
-
-
-  @Get("/posts-queue")
-  public HttpResponse posts() {
-    return HttpResponses.staticResource("posts.html");
   }
 
   @Get("/static/**") 

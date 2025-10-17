@@ -2,363 +2,205 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=1920, height=1080, initial-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Generated Haiku</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akka Haiku Generator</title>
     <link rel="stylesheet" href="static/style.css">
 </head>
 <body>
-    <div class="container has-split-layout">
-        <div class="split-layout">
-            <!-- Left Half: Haiku Carousel -->
-            <div class="left-half">
-                <div class="banner-content">
-                    <div class="banner-left">
-                        <div class="banner-header">
-                            <img class="banner-logo" src="static/img/akka-logo-white-large.png" alt="Akka"/>
-                        </div>
-                        <div class="banner-header">Haiku generator</div>
-                        <div class="highlight-message">
-                            What's on <span style="color: #ffce4a;">your mind</span>?
-                            <br/><span style="color: #ffce4a;">Scan here</span> to transform your <span
-                                style="color: #ffce4a;">thoughts</span> into a <br/>
-                            one-of-a-kind <span style="color: #72d35b;">Haiku</span> and image, <br/>
-                            and walk away with a free <span style="color: #72d35b;">Akka t-shirt!</span>
-                        </div>
-                    </div>
-                    <div class="qr-pane">
-                        <div class="qr-container" id="qrContainer">
-                            <div class="no-qr">
-                                <span class="loading"></span> Loading QR code...
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="topline"></div>
+    <div class="container">
+        <div class="header">
+            <h1>Akka Haiku Generator</h1>
+            <p>Enter your inspiration and watch AI create beautiful haikus</p>
+        </div>
 
-            <!-- Right Half: Banner Content -->
-            <div class="right-half">
-                <div class="carousel-container">
-                    <div class="carousel-wrapper">
-                        <div id="haikuStreamGrid" class="carousel-content"></div>
-                    </div>
-                    <div class="carousel-navigation">
-                        <button class="carousel-btn prev-btn" id="prevBtn">‹</button>
-                        <div class="carousel-indicators" id="carouselIndicators"></div>
-                        <button class="carousel-btn next-btn" id="nextBtn">›</button>
-                    </div>
-                </div>
-            </div>
+        <div class="input-section">
+            <form id="haikuForm" class="input-form">
+                <input
+                    type="text"
+                    id="userInput"
+                    class="input-field"
+                    placeholder="Enter your inspiration..."
+                    required
+                    autocomplete="off"
+                />
+                <button type="submit" class="submit-btn" id="submitBtn">Generate</button>
+            </form>
+            <div id="status" class="status"></div>
+        </div>
+
+        <div id="resultSection" class="content-section" style="display: none;">
+            <h2>Generated Haiku</h2>
+            <div id="haikuResult"></div>
         </div>
     </div>
+
     <script>
-        class QrCodeManager {
-            constructor() {
-                this.qrEventSource = null;
-                this.qrContainer = document.getElementById('qrContainer');
-                this.currentQrCode = null;
-                this.initializeQrStream();
-            }
-            initializeQrStream() {
-                try {
-                    this.qrEventSource = new EventSource('/qrcodes');
-                    this.qrEventSource.onopen = () => {
-                        console.log('QR code stream connected');
-                    };
-                    this.qrEventSource.onmessage = (event) => {
-                        try {
-                            const qrCode = JSON.parse(event.data);
-                            this.handleQrCode(qrCode);
-                        } catch (error) {
-                            console.error('Error parsing QR code:', error);
-                        }
-                    };
-                    this.qrEventSource.onerror = (error) => {
-                        console.log('QR code connection lost - attempting to reconnect...', error);
-                        setTimeout(() => {
-                            if (this.qrEventSource.readyState === EventSource.CLOSED) {
-                                console.log('Reconnecting to QR code stream...');
-                                this.initializeQrStream();
-                            }
-                        }, 5000);
-                    };
-                } catch (error) {
-                    console.error('Failed to initialize QR code EventSource:', error);
-                }
-            }
-            handleQrCode(qrCode) {
-                this.currentQrCode = qrCode;
-                this.qrContainer.innerHTML = `
-                    <div class="qr-code-display">
-                        <a href="${this.escapeHtml('/gateway/' + qrCode.tokenGroupId)}" target="_blank" rel="noopener" class="qr-link">
-                            <img src="${this.escapeHtml(qrCode.qrCodeUrl)}" alt="QR Code" class="qr-image" />
-                        </a>
-                    </div>
-                `;
-            }
-            escapeHtml(text) {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
-            }
-            destroy() {
-                if (this.qrEventSource) {
-                    this.qrEventSource.close();
-                }
+        let pollingInterval = null;
+        let currentHaikuId = null;
+
+        // Generate random UUID v4
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        // Show status message
+        function showStatus(message, isError = false) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = 'status ' + (isError ? 'error' : 'success');
+            statusEl.style.display = 'block';
+        }
+
+        // Hide status message
+        function hideStatus() {
+            const statusEl = document.getElementById('status');
+            statusEl.style.display = 'none';
+        }
+
+        // Stop polling
+        function stopPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
             }
         }
-        // --- HaikuStreamManager for /haikus SSE ---
-        class HaikuStreamManager {
-            constructor() {
-                this.haikuGrid = document.getElementById('haikuStreamGrid');
-                this.haikuMap = new Map(); // key: id, value: haikuObj
-                this.eventSource = null;
-                this.currentIndex = 0;
-                this.autoPlayInterval = null;
-                this.autoPlayDelay = 5000; // 5 seconds
-                this.maxItems = 10; // Cap carousel to 50 items
-                this.initializeCarousel();
-                this.connect();
+
+        // Display haiku result
+        function displayHaiku(response) {
+            const resultSection = document.getElementById('resultSection');
+            const haikuResult = document.getElementById('haikuResult');
+
+            let html = '<div class="content-item">';
+
+            // Add haiku if available
+            if (response.haiku) {
+                html += `<div class="content-prompt">"${response.prompt}"</div>`;
+                html += '<div class="haiku">';
+                html += `<div class="haiku-line">${response.haiku.line1}</div>`;
+                html += `<div class="haiku-line">${response.haiku.line2}</div>`;
+                html += `<div class="haiku-line">${response.haiku.line3}</div>`;
+                html += '</div>';
+            } else {
+                html += '<div class="no-content">Generating haiku<span class="blinking-dots">...</span></div>';
             }
-            connect() {
-                try {
-                    this.eventSource = new EventSource('/haikus');
-                    this.eventSource.onopen = () => {
-                        // Optionally show connection status
-                    };
-                    this.eventSource.onmessage = (event) => {
-                        try {
-                            const haikuObj = JSON.parse(event.data);
-                            this.handleHaiku(haikuObj);
-                        } catch (e) {
-                            console.error('Error parsing haiku JSON, ignoring:', e, 'Raw data:', event.data);
-                            // Simply ignore unparsable data, don't affect the carousel
-                            return;
-                        }
-                    };
-                    this.eventSource.onerror = (err) => {
-                        // Optionally show error status
-                        setTimeout(() => {
-                            if (this.eventSource.readyState === EventSource.CLOSED) {
-                                this.connect();
-                            }
-                        }, 5000);
-                    };
-                } catch (e) {
-                    // Optionally show error status
+
+            // Add image if available
+            if (response.image && response.image.url) {
+                html += '<div class="image-container">';
+                html += `<img src="${response.image.url}" alt="Generated image" class="generated-image" />`;
+                html += '</div>';
+            }
+
+            // Add timestamp if available
+            if (response.generatedAt) {
+                const date = new Date(response.generatedAt);
+                html += `<div class="content-timestamp">Generated: ${date.toLocaleString()}</div>`;
+            }
+
+            html += '</div>';
+
+            haikuResult.innerHTML = html;
+            resultSection.style.display = 'block';
+        }
+
+        // Poll for haiku result
+        async function pollHaiku(haikuId) {
+            try {
+                const response = await fetch(`/haikus/${haikuId}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-            }
-            initializeCarousel() {
-                this.prevBtn = document.getElementById('prevBtn');
-                this.nextBtn = document.getElementById('nextBtn');
-                this.indicators = document.getElementById('carouselIndicators');
 
-                this.prevBtn.addEventListener('click', () => this.previousSlide());
-                this.nextBtn.addEventListener('click', () => this.nextSlide());
+                const data = await response.json();
+                displayHaiku(data);
 
-                // Auto-play functionality
-                this.startAutoPlay();
-
-                // Pause auto-play on hover
-                const carouselContainer = document.querySelector('.carousel-container');
-                carouselContainer.addEventListener('mouseenter', () => this.stopAutoPlay());
-                carouselContainer.addEventListener('mouseleave', () => this.startAutoPlay());
-            }
-            getKey(haikuObj) {
-                // Use unique id as key
-                return haikuObj.id;
-            }
-            handleHaiku(haikuObj) {
-                const key = this.getKey(haikuObj);
-                // Only add/update if haiku or image is present
-                if (haikuObj.haiku || haikuObj.image) {
-                    const isNewHaiku = !this.haikuMap.has(key);
-                    this.haikuMap.set(key, haikuObj);
-
-                    // Remove oldest if over maxItems
-                    if (this.haikuMap.size > this.maxItems) {
-                        // Sort by generatedAt ascending (oldest first)
-                        const sorted = Array.from(this.haikuMap.values())
-                            .filter(h => h.haiku || h.image)
-                            .sort((a, b) => {
-                                var aTime = a.generatedAt || a.generateAt || 0;
-                                var bTime = b.generatedAt || b.generateAt || 0;
-                                if (aTime < bTime) return -1;
-                                else if (aTime > bTime) return 1;
-                                else return 0;
-                            });
-                        while (this.haikuMap.size > this.maxItems && sorted.length > 0) {
-                            const oldest = sorted.shift();
-                            if (oldest && this.haikuMap.has(oldest.id)) {
-                                this.haikuMap.delete(oldest.id);
-                            }
-                        }
-                    }
-
-                    // Reset to beginning when new content arrives, but only if it's truly new
-                    if (isNewHaiku && this.haikuMap.size > 1) {
-                        this.currentIndex = 0;
-                    }
+                // If haiku is complete (has both haiku and image), stop polling
+                if (data.haiku && data.image) {
+                    stopPolling();
+                    showStatus('Haiku generation complete!', false);
+                    document.getElementById('submitBtn').disabled = false;
                 }
-                this.render();
+            } catch (error) {
+                console.error('Error polling haiku:', error);
+                showStatus('Error fetching haiku: ' + error.message, true);
+                stopPolling();
+                document.getElementById('submitBtn').disabled = false;
             }
-            render() {
-                this.haikuGrid.innerHTML = '';
-                // Only show tiles with haiku or image
-                const haikus = Array.from(this.haikuMap.values())
-                    .filter(h => h.haiku || h.image)
-                    .sort((a, b) => {
-                      var aTime = a.generatedAt || 0;
-                      var bTime = b.generatedAt || 0;
+        }
 
-                      if (aTime > bTime) return -1;
-                      else if (aTime < bTime) return 1;
-                      else return 0;
+        // Start polling
+        function startPolling(haikuId) {
+            currentHaikuId = haikuId;
+
+            // Initial poll
+            pollHaiku(haikuId);
+
+            // Poll every 2 seconds
+            pollingInterval = setInterval(() => {
+                pollHaiku(haikuId);
+            }, 2000);
+        }
+
+        // Handle form submission
+        document.getElementById('haikuForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const userInput = document.getElementById('userInput').value.trim();
+            if (!userInput) {
+                showStatus('Please enter some text', true);
+                return;
+            }
+
+            // Stop any existing polling
+            stopPolling();
+
+            // Generate new UUID for this haiku
+            const haikuId = generateUUID();
+
+            // Disable submit button
+            document.getElementById('submitBtn').disabled = true;
+
+            // Show loading status
+            hideStatus();
+            showStatus('Submitting your request...', false);
+
+            try {
+                // Submit the haiku generation request
+                const response = await fetch(`/haikus/${haikuId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: userInput
                     })
-                if (haikus.length === 0) {
-                    this.haikuGrid.innerHTML = '<div class="no-content">No haikus generated yet.</div>';
-                    this.updateIndicators(0);
-                    this.updateNavigationButtons(0);
-                    return;
-                }
-                for (const haikuObj of haikus) {
-                    const card = document.createElement('div');
-                    card.className = 'content-item';
-                    // Haiku title
-                    let haikuHtml = '';
-                    if (haikuObj.haiku && haikuObj.haiku.line1) {
-                        haikuHtml += `<div class='haiku'>`;
-                        haikuHtml += `<div class='haiku-line'>${this.escapeHtml(haikuObj.haiku.line1)}</div>`;
-                        haikuHtml += haikuObj.haiku.line2 ? `<div class='haiku-line'>${this.escapeHtml(haikuObj.haiku.line2)}</div>` : '';
-                        haikuHtml += haikuObj.haiku.line3 ? `<div class='haiku-line'>${this.escapeHtml(haikuObj.haiku.line3)}</div>` : '';
-                        haikuHtml += `</div>`;
-                    } else {
-                      if (haikuObj.image && haikuObj.image.url) {
-                        haikuHtml += `<div class='haiku'><div class='haiku-line' style='opacity:0.6;'>No haiku generated</div></div>`;
-                      } else {
-                        haikuHtml += `<div class='haiku'><div class='haiku-line' style='opacity:0.6;'>Generating haiku...</div></div>`;
-                      }
-                    }
-                    // Image
-                    let imageHtml = '';
-                    if (haikuObj.image && haikuObj.image.url) {
-                        imageHtml = `<div class='image-container'><img src='${this.escapeHtml(haikuObj.image.url)}' alt='Generated image' class='generated-image' /></div>`;
-                    } else {
-                        imageHtml = `<div class='image-container'><div class='no-content' style='opacity:0.6;'>Generating image...</div></div>`;
-                    }
-                    // Prompt and date
-                    let metaHtml = `<div class='content-prompt'><strong>Prompt:</strong> ${this.escapeHtml(haikuObj.prompt || '')}</div>`;
-                    const genAt = haikuObj.generatedAt || haikuObj.generateAt;
-                    if (genAt) {
-                        const date = new Date(genAt).toLocaleString();
-                        metaHtml += `<div class='content-timestamp'>Generated at: ${date}</div>`;
-                    }
-                    card.innerHTML = `${haikuHtml}${imageHtml}${metaHtml}`;
-                    this.haikuGrid.appendChild(card);
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                // Ensure current index is within bounds
-                this.currentIndex = Math.min(this.currentIndex, haikus.length - 1);
-                this.currentIndex = Math.max(this.currentIndex, 0);
+                showStatus('Generating haiku... Please wait.', false);
 
-                this.updateCarouselPosition();
-                this.updateIndicators(haikus.length);
-                this.updateNavigationButtons(haikus.length);
-            }
-            updateCarouselPosition() {
-                const translateX = -this.currentIndex * 100;
-                this.haikuGrid.style.transform = `translateX(${translateX}%)`;
-            }
-            nextSlide() {
-                console.log("nextSlide");
-                const totalItems = this.haikuGrid.children.length;
-                if (totalItems > 0) {
-                    this.currentIndex = (this.currentIndex + 1) % totalItems;
-                    this.updateCarouselPosition();
-                    this.updateIndicators(totalItems);
-                    this.updateNavigationButtons(totalItems);
-                }
-            }
-            previousSlide() {
-                const totalItems = this.haikuGrid.children.length;
-                if (totalItems > 0) {
-                    this.currentIndex = (this.currentIndex - 1 + totalItems) % totalItems;
-                    this.updateCarouselPosition();
-                    this.updateIndicators(totalItems);
-                    this.updateNavigationButtons(totalItems);
-                }
-            }
-            goToSlide(index) {
-                const totalItems = this.haikuGrid.children.length;
-                if (index >= 0 && index < totalItems) {
-                    this.currentIndex = index;
-                    this.updateCarouselPosition();
-                    this.updateIndicators(totalItems);
-                    this.updateNavigationButtons(totalItems);
-                }
-            }
-            updateIndicators(totalItems) {
-                this.indicators.innerHTML = '';
-                for (let i = 0; i < totalItems; i++) {
-                    const indicator = document.createElement('div');
-                    indicator.className = `carousel-indicator ${i === this.currentIndex ? 'active' : ''}`;
-                    indicator.addEventListener('click', () => this.goToSlide(i));
-                    this.indicators.appendChild(indicator);
-                }
-            }
-            updateNavigationButtons(totalItems) {
-                if (totalItems <= 1) {
-                    this.prevBtn.style.display = 'none';
-                    this.nextBtn.style.display = 'none';
-                } else {
-                    this.prevBtn.style.display = 'flex';
-                    this.nextBtn.style.display = 'flex';
-                }
-            }
-            startAutoPlay() {
-                // Don't restart if already running
-                // if (this.autoPlayInterval) {
-                //     return;
-                // }
+                // Start polling for results
+                startPolling(haikuId);
 
-                this.autoPlayInterval = setInterval(() => {
-                    // Only advance if there are multiple items
-                    if (this.haikuGrid.children.length > 1) {
-                        this.nextSlide();
-                    }
-                }, this.autoPlayDelay);
-
-                console.log("Started auto-play with delay: " + this.autoPlayDelay);
+            } catch (error) {
+                console.error('Error submitting haiku:', error);
+                showStatus('Error: ' + error.message, true);
+                document.getElementById('submitBtn').disabled = false;
             }
-            stopAutoPlay() {
-                if (this.autoPlayInterval) {
-                    console.log("Stopping auto-play");
-                    clearInterval(this.autoPlayInterval);
-                    this.autoPlayInterval = null;
-                }
-            }
-            escapeHtml(text) {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
-            }
-            destroy() {
-                this.stopAutoPlay();
-                if (this.eventSource) this.eventSource.close();
-            }
-        }
-        let qrCodeManager;
-        document.addEventListener('DOMContentLoaded', () => {
-            qrCodeManager = new QrCodeManager();
-            haikuStreamManager = new HaikuStreamManager();
         });
+
+        // Clean up polling on page unload
         window.addEventListener('beforeunload', () => {
-            if (qrCodeManager) {
-                qrCodeManager.destroy();
-            }
-            if (haikuStreamManager) haikuStreamManager.destroy();
+            stopPolling();
         });
     </script>
 </body>

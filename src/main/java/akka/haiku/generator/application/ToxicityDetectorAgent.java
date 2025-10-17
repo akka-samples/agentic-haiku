@@ -1,13 +1,15 @@
 package akka.haiku.generator.application;
 
-import akka.haiku.generator.domain.UserInput;
 import akka.javasdk.agent.Agent;
 import akka.javasdk.agent.MemoryProvider;
-import akka.javasdk.annotations.ComponentId;
+import akka.javasdk.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@ComponentId("toxic-content-detector")
+import static akka.haiku.generator.application.ContentEvaluationResult.notPassedResult;
+import static akka.haiku.generator.application.ContentEvaluationResult.passedResult;
+
+@Component(id = "toxic-content-detector")
 public class ToxicityDetectorAgent extends Agent {
 
 
@@ -28,24 +30,20 @@ public class ToxicityDetectorAgent extends Agent {
     
     """;
 
-  public Effect<UserInput> evaluateContent(UserInput input) {
+  public Effect<ContentEvaluationResult> evaluateContent(String input) {
     return effects()
       .systemMessage(SYS_MESSAGE)
       // we don't want to save any content before we are able to decide if it's harmful or not
       .memory(MemoryProvider.none())
-      .userMessage(input.originalInput())
-      .map( res -> evaluatedAs(input, res))
+      .userMessage(input)
+      .map(res -> {
+        log.info("Toxicity detector agent evaluate content: {}", res);
+        if ("NON_TOXIC_CONTENT".equals(res)) {
+          return passedResult();
+        }
+        return notPassedResult("Content is evaluated as: " + res);
+      })
       .thenReply();
-  }
-
-  private UserInput evaluatedAs(UserInput input, String response) {
-    log.debug("evaluation result is '{}'", response);
-    try {
-      var eval = UserInput.Eval.valueOf(response);
-      return input.evaluatedAs(eval);
-    } catch (IllegalArgumentException e) {
-      return input.evaluatedAs(UserInput.Eval.UNKNOWN);
-    }
   }
 
 }

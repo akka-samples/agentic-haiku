@@ -3,9 +3,7 @@ package akka.haiku.generator.application;
 import akka.Done;
 import akka.haiku.generator.domain.Haiku;
 import akka.haiku.generator.domain.HaikuGeneration;
-import akka.haiku.generator.domain.HaikuId;
-import akka.haiku.generator.domain.UserInput;
-import akka.javasdk.annotations.ComponentId;
+import akka.javasdk.annotations.Component;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.workflow.Workflow;
 import akka.javasdk.workflow.WorkflowContext;
@@ -16,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import static akka.Done.done;
 import static java.time.Duration.ofSeconds;
 
-@ComponentId("image-generation-workflow")
+@Component(id = "image-generation-workflow")
 public class HaikuGenerationWorkflow extends Workflow<HaikuGeneration> {
 
   private static final Logger log = LoggerFactory.getLogger(HaikuGenerationWorkflow.class);
@@ -54,9 +52,9 @@ public class HaikuGenerationWorkflow extends Workflow<HaikuGeneration> {
       log.info("Workflow [{}]: starting image generation for input: {}", workflowId, input);
 
       return effects()
-        .updateState(HaikuGeneration.empty(new HaikuId(workflowId)))
+        .updateState(HaikuGeneration.empty(workflowId))
         .transitionTo(HaikuGenerationWorkflow::checkMessageQuality)
-        .withInput(UserInput.of(input))
+        .withInput(input)
         .thenReply(done());
     }
   }
@@ -77,7 +75,7 @@ public class HaikuGenerationWorkflow extends Workflow<HaikuGeneration> {
     }
   }
 
-  private StepEffect checkMessageQuality(UserInput userInput) {
+  private StepEffect checkMessageQuality(String userInput) {
 
     log.debug("Workflow [{}]: checking message quality.", workflowId);
 
@@ -86,60 +84,60 @@ public class HaikuGenerationWorkflow extends Workflow<HaikuGeneration> {
       throw new RuntimeException("Random failure during message quality check");
     }
 
-    var evaluated = componentClient
+    var evaluation = componentClient
       .forAgent()
       .inSession(this.workflowId)
       .method(ToxicityDetectorAgent::evaluateContent)
       .invoke(userInput);
 
-    if (evaluated.isAccepted()) {
+    if (evaluation.passed()) {
       log.debug("Workflow [{}]: message is accepted.", workflowId);
       return stepEffects()
         .updateState(currentState().accepted())
         .thenTransitionTo(HaikuGenerationWorkflow::analyseSentiment)
-        .withInput(evaluated);
+        .withInput(userInput);
 
     } else {
-      log.debug("Workflow [{}]: message is rejected. Flagged as {}", workflowId, evaluated.eval());
+      log.debug("Workflow [{}]: message is rejected. {}", workflowId, evaluation.explanation());
       return stepEffects()
         .updateState(currentState().toxicityDetected())
         .thenEnd();
     }
   }
 
-  private StepEffect analyseSentiment(UserInput userInput) {
+  private StepEffect analyseSentiment(String userInput) {
 
     log.debug("Workflow [{}]: analysing message sentiment.", workflowId);
 
-    var evaluated = componentClient
+    var evaluation = componentClient
       .forAgent()
       .inSession(this.workflowId)
       .method(SentimentDetectorAgent::analyseSentiment)
       .invoke(userInput);
 
-    if (evaluated.isNegative()) {
+    if (evaluation.passed()) {
+      log.debug("Workflow [{}]: message is positive or neutral, generating a Haiku...", workflowId);
+      return stepEffects()
+        .updateState(currentState().validated().withUserInput(userInput))
+        .thenTransitionTo(HaikuGenerationWorkflow::generateHaiku)
+        .withInput(userInput);
+
+    } else {
       log.debug("Workflow [{}]: message is negative, discarding it.", workflowId);
       return stepEffects()
         .updateState(currentState().negativityDetected())
         .thenEnd();
-
-    } else {
-      log.debug("Workflow [{}]: message is positive or neutral, generating a Haiku...", workflowId);
-      return stepEffects()
-        .updateState(currentState().validated().withUserInput(userInput.originalInput()))
-        .thenTransitionTo(HaikuGenerationWorkflow::generateHaiku)
-        .withInput(evaluated);
     }
   }
 
-  private StepEffect generateHaiku(UserInput userInput) {
+  private StepEffect generateHaiku(String userInput) {
 
     log.debug("Workflow [{}]: generating Haiku from message.", workflowId);
     var haiku = componentClient
       .forAgent()
       .inSession(this.workflowId)
       .method(HaikuGenAgent::generate)
-      .invoke(userInput.originalInput());
+      .invoke(userInput);
 
     return stepEffects()
       .updateState(currentState().withHaiku(haiku))

@@ -12,14 +12,14 @@ import static akka.haiku.generator.domain.HaikuGenerationStatus.TIMED_OUT;
 import static akka.haiku.generator.domain.HaikuGenerationStatus.TOXICITY_DETECTED;
 import static akka.haiku.generator.domain.HaikuGenerationStatus.VALIDATED;
 
-public record HaikuGeneration(HaikuId haikuId,
+public record HaikuGeneration(String haikuId,
                               String userInput,
                               Long generatedAt,
                               HaikuGenerationStatus status,
                               Optional<Haiku> haiku,
                               Optional<Image> image) {
 
-  public static HaikuGeneration empty(HaikuId haikuId) {
+  public static HaikuGeneration empty(String haikuId) {
     return new HaikuGeneration(haikuId, "***********", null, STARTED, Optional.empty(), Optional.empty());
   }
 
@@ -33,14 +33,6 @@ public record HaikuGeneration(HaikuId haikuId,
 
   public HaikuGeneration withHaiku(Haiku haiku) {
     return new HaikuGeneration(haikuId, userInput, Instant.now().toEpochMilli(), HAIKU_GENERATED, Optional.of(haiku), image);
-  }
-
-  public boolean hasImage() {
-    return image.isPresent();
-  }
-
-  public boolean isComplete() {
-    return haiku.isPresent() && image.isPresent();
   }
 
   public HaikuGeneration accepted() {
@@ -61,9 +53,5 @@ public record HaikuGeneration(HaikuId haikuId,
 
   public HaikuGeneration timedOut() {
     return new HaikuGeneration(haikuId, userInput, Instant.now().toEpochMilli(), TIMED_OUT, haiku, Optional.of(new Image("static/img/time-is-up.png")));
-  }
-
-  public boolean successfullyGenerated() {
-    return status != TOXICITY_DETECTED && status != NEGATIVITY_DETECTED && status != TIMED_OUT;
   }
 }

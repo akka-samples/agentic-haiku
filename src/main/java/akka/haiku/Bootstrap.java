@@ -1,11 +1,5 @@
 package akka.haiku;
 
-import akka.haiku.conference.application.ScheduleScanner;
-import akka.haiku.conference.application.SocialPublisher;
-import akka.haiku.conference.application.SocialPublisherBluesky;
-import akka.haiku.conference.application.SocialPublisherLogger;
-import akka.haiku.gateway.application.QrCodeGenerator;
-import akka.haiku.gateway.application.TokenGroupEntity;
 import akka.haiku.generator.application.ImageGenerator;
 import akka.haiku.generator.infrastructure.FixedImageGenerator;
 import akka.haiku.generator.infrastructure.GeminiImageGenerator;
@@ -15,79 +9,24 @@ import akka.haiku.storage.infrastructure.LocalStorage;
 import akka.javasdk.DependencyProvider;
 import akka.javasdk.ServiceSetup;
 import akka.javasdk.annotations.Setup;
-import akka.javasdk.client.ComponentClient;
-import akka.javasdk.http.HttpClientProvider;
-import akka.javasdk.timer.TimerScheduler;
-import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.UUID;
 
 @Setup
 public class Bootstrap implements ServiceSetup {
 
   private static final Logger log = LoggerFactory.getLogger(Bootstrap.class);
-  private final ComponentClient componentClient;
-  private final int tokenGroupSize;
-  private final Config config;
-  private final TimerScheduler timerScheduler;
-  private final HttpClientProvider httpClientProvider;
-
-  public Bootstrap(Config config,
-                   ComponentClient componentClient,
-                   HttpClientProvider httpClientProvider,
-                   TimerScheduler timerScheduler
-
-  ) {
-    this.timerScheduler = timerScheduler;
-    this.componentClient = componentClient;
-    this.httpClientProvider = httpClientProvider;
-    this.config = config;
-    this.tokenGroupSize = config.getInt("haiku.app.token-group-size");
-
-  }
-
-  @Override
-  public void onStartup() {
-    componentClient.forKeyValueEntity(UUID.randomUUID().toString())
-      .method(TokenGroupEntity::create)
-      .invokeAsync(tokenGroupSize);
-
-  }
 
   @Override
   public DependencyProvider createDependencyProvider() {
     var blobStorage = createBlobStorage();
     var imageGenerator = createImageGenerator(blobStorage);
-    var qrCodeGenerator = new QrCodeGenerator(blobStorage, config);
-    var scanner = new ScheduleScanner(httpClientProvider.httpClientFor("https://dvbe25.cfp.dev"), timerScheduler, componentClient);
-
-    SocialPublisher socialPublisher;
-    if (System.getenv("BSKY_USER") != null) {
-      socialPublisher = new SocialPublisherBluesky(
-        config,
-        httpClientProvider.httpClientFor("https://bsky.social"),
-        System.getenv("BSKY_USER"),
-        System.getenv("BSKY_PASSWORD")
-      );
-    } else {
-      socialPublisher = new SocialPublisherLogger(config);
-    }
-
-    log.debug("Running with social publisher '{}'",  socialPublisher.getClass().getSimpleName());
 
     return new DependencyProvider() { // <3>
       @Override
       public <T> T getDependency(Class<T> clazz) {
-        if (clazz == ScheduleScanner.class) {
-          return (T) scanner;
-        } else if (clazz == ImageGenerator.class) {
+        if (clazz == ImageGenerator.class) {
           return (T) imageGenerator;
-        } else if (clazz == QrCodeGenerator.class) {
-          return (T) qrCodeGenerator;
-        } else if (clazz == SocialPublisher.class) {
-          return (T) socialPublisher;
         } else {
           throw new RuntimeException("No such dependency found: " + clazz);
         }
