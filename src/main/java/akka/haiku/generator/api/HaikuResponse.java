@@ -5,7 +5,7 @@ import akka.haiku.generator.domain.Image;
 
 import java.util.Optional;
 
-public record HaikuApiModel(String id,
+public record HaikuResponse(String id,
                             String prompt,
                             Long generatedAt,
                             Optional<Haiku> haiku,

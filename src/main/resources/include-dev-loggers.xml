@@ -11,4 +11,5 @@
 <included>
     <logger name="akka.haiku" level="DEBUG"/>
     <logger name="akka.runtime.views.Updater" level="OFF"/>
+    <logger name="akka.haiku.generator.api.HaikusEndpoint" level="TRACE"/>
 </included>
