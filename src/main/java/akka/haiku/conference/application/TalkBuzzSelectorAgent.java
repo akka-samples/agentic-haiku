@@ -2,11 +2,11 @@ package akka.haiku.conference.application;
 
 import akka.javasdk.agent.Agent;
 import akka.javasdk.agent.MemoryProvider;
-import akka.javasdk.annotations.ComponentId;
+import akka.javasdk.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@ComponentId("buzz-selector-agent")
+@Component(id = "buzz-selector-agent")
 public class TalkBuzzSelectorAgent extends Agent {
 
 

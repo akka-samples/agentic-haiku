@@ -1,7 +1,7 @@
 package akka.haiku.conference.application;
 
 import akka.haiku.conference.application.SocialPostEntity.SocialPostState;
-import akka.javasdk.annotations.ComponentId;
+import akka.javasdk.annotations.Component;
 import akka.javasdk.annotations.Consume;
 import akka.javasdk.annotations.DeleteHandler;
 import akka.javasdk.annotations.Query;
@@ -11,7 +11,7 @@ import akka.javasdk.view.View;
 import java.time.Instant;
 import java.util.List;
 
-@ComponentId("social-post-view")
+@Component(id = "social-post-view")
 public class SocialPostView extends View {
 
   public record SocialPostRow(String id,

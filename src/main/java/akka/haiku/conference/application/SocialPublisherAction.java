@@ -1,12 +1,12 @@
 package akka.haiku.conference.application;
 
-import akka.javasdk.annotations.ComponentId;
+import akka.javasdk.annotations.Component;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.timedaction.TimedAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@ComponentId("post-publisher")
+@Component(id = "post-publisher")
 public class SocialPublisherAction extends TimedAction {
 
   private final Logger log = LoggerFactory.getLogger(SocialPublisherAction.class);

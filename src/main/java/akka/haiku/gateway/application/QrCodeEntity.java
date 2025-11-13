@@ -2,12 +2,12 @@ package akka.haiku.gateway.application;
 
 import akka.Done;
 import akka.haiku.gateway.domain.QrCode;
-import akka.javasdk.annotations.ComponentId;
+import akka.javasdk.annotations.Component;
 import akka.javasdk.keyvalueentity.KeyValueEntity;
 
 import static akka.Done.done;
 
-@ComponentId("qr-code")
+@Component(id = "qr-code")
 public class QrCodeEntity extends KeyValueEntity<QrCode> {
 
   public Effect<Done> create(String qrCodeUrl) {

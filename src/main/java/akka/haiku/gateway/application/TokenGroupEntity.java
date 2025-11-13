@@ -2,7 +2,7 @@ package akka.haiku.gateway.application;
 
 import akka.Done;
 import akka.haiku.gateway.domain.TokenGroup;
-import akka.javasdk.annotations.ComponentId;
+import akka.javasdk.annotations.Component;
 import akka.javasdk.keyvalueentity.KeyValueEntity;
 import akka.javasdk.keyvalueentity.KeyValueEntityContext;
 import org.slf4j.Logger;
@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import static akka.Done.done;
 
-@ComponentId("token-group")
+@Component(id = "token-group")
 public class TokenGroupEntity extends KeyValueEntity<TokenGroup> {
 
   private static final Logger log = LoggerFactory.getLogger(TokenGroupEntity.class);

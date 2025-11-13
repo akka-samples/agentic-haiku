@@ -3,7 +3,7 @@ package akka.haiku.conference.application;
 import akka.Done;
 import akka.haiku.generator.application.HaikuGenerationWorkflow;
 import akka.haiku.generator.domain.HaikuId;
-import akka.javasdk.annotations.ComponentId;
+import akka.javasdk.annotations.Component;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.http.HttpClient;
 import akka.javasdk.http.HttpClientProvider;
@@ -16,7 +16,7 @@ import java.util.UUID;
 
 import static java.time.Duration.ofSeconds;
 
-@ComponentId("run-content-generation-for-talk")
+@Component(id = "run-content-generation-for-talk")
 public class TalkHaikuGenerationWorkflow extends Workflow<TalkHaikuGenerationWorkflow.State> {
 
   private final Logger log = LoggerFactory.getLogger(TalkHaikuGenerationWorkflow.class);

@@ -1,13 +1,13 @@
 package akka.haiku.gateway.application;
 
 import akka.haiku.gateway.domain.QrCode;
-import akka.javasdk.annotations.ComponentId;
+import akka.javasdk.annotations.Component;
 import akka.javasdk.annotations.Consume;
 import akka.javasdk.annotations.Query;
 import akka.javasdk.view.TableUpdater;
 import akka.javasdk.view.View;
 
-@ComponentId("qr-code-view")
+@Component(id = "qr-code-view")
 public class QrCodeView extends View {
 
   @Consume.FromKeyValueEntity(QrCodeEntity.class)

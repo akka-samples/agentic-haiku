@@ -2,7 +2,7 @@ package akka.haiku.generator.application;
 
 import akka.haiku.generator.domain.HaikuGeneration;
 import akka.haiku.generator.domain.HaikuGenerationStatus;
-import akka.javasdk.annotations.ComponentId;
+import akka.javasdk.annotations.Component;
 import akka.javasdk.annotations.Consume;
 import akka.javasdk.annotations.Query;
 import akka.javasdk.view.TableUpdater;
@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-@ComponentId("generation-progress-view")
+@Component(id = "generation-progress-view")
 public class GenerationProgressView extends View {
 
   private static final Logger log = LoggerFactory.getLogger(GenerationProgressView.class);

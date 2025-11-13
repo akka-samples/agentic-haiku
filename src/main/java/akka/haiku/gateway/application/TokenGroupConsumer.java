@@ -1,7 +1,7 @@
 package akka.haiku.gateway.application;
 
 import akka.haiku.gateway.domain.TokenGroup;
-import akka.javasdk.annotations.ComponentId;
+import akka.javasdk.annotations.Component;
 import akka.javasdk.annotations.Consume;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.consumer.Consumer;
@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
-@ComponentId("token-group-consumer")
+@Component(id = "token-group-consumer")
 @Consume.FromKeyValueEntity(TokenGroupEntity.class)
 public class TokenGroupConsumer extends Consumer {
 

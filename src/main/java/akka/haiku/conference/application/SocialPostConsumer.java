@@ -1,7 +1,7 @@
 package akka.haiku.conference.application;
 
 
-import akka.javasdk.annotations.ComponentId;
+import akka.javasdk.annotations.Component;
 import akka.javasdk.annotations.Consume;
 import akka.javasdk.annotations.DeleteHandler;
 import akka.javasdk.client.ComponentClient;
@@ -17,7 +17,7 @@ import java.time.Instant;
  * They are scheduled as soon as they are created, but will only be posted if they are approved when
  * the schedule action fires.
  */
-@ComponentId("social-post-consumer")
+@Component(id = "social-post-consumer")
 @Consume.FromKeyValueEntity(SocialPostEntity.class)
 public class SocialPostConsumer extends Consumer {
 

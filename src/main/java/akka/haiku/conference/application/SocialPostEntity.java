@@ -1,7 +1,7 @@
 package akka.haiku.conference.application;
 
 import akka.Done;
-import akka.javasdk.annotations.ComponentId;
+import akka.javasdk.annotations.Component;
 import akka.javasdk.keyvalueentity.KeyValueEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.util.List;
 
-@ComponentId("social-post-entity")
+@Component(id = "social-post-entity")
 public class SocialPostEntity extends KeyValueEntity<SocialPostEntity.SocialPostState> {
 
     private static final Logger log = LoggerFactory.getLogger(SocialPostEntity.class);

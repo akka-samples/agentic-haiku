@@ -5,7 +5,7 @@ import akka.haiku.generator.domain.Haiku;
 import akka.haiku.generator.domain.HaikuGeneration;
 import akka.haiku.generator.domain.HaikuId;
 import akka.haiku.generator.domain.UserInput;
-import akka.javasdk.annotations.ComponentId;
+import akka.javasdk.annotations.Component;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.workflow.Workflow;
 import akka.javasdk.workflow.WorkflowContext;
@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 import static akka.Done.done;
 import static java.time.Duration.ofSeconds;
 
-@ComponentId("image-generation-workflow")
+@Component(id = "image-generation-workflow")
 public class HaikuGenerationWorkflow extends Workflow<HaikuGeneration> {
 
   private static final Logger log = LoggerFactory.getLogger(HaikuGenerationWorkflow.class);

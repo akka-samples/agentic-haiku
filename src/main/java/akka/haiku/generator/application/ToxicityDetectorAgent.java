@@ -3,11 +3,11 @@ package akka.haiku.generator.application;
 import akka.haiku.generator.domain.UserInput;
 import akka.javasdk.agent.Agent;
 import akka.javasdk.agent.MemoryProvider;
-import akka.javasdk.annotations.ComponentId;
+import akka.javasdk.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@ComponentId("toxic-content-detector")
+@Component(id = "toxic-content-detector")
 public class ToxicityDetectorAgent extends Agent {
 
 
