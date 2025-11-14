@@ -17,7 +17,7 @@ service:
     value: /google-application-credentials-path/credentials.json
   - name: HAIKU_APP_URL
     value: https://red-sea-1222.gcp-us-east1.akka.services
-  image: kcr.us-east-1.kalix.io/lightbend-eng/akka-outreach/agentic-haiku:1.0.2
+  image: kcr.us-east-1.kalix.io/lightbend-eng/akka-outreach/agentic-haiku:1.0.2-20251114142117
   resources:
     runtime:
       mode: embedded
