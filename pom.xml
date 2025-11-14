@@ -15,7 +15,7 @@
   <name>agentic-haiku</name>
 
   <properties>
-    <docker.image>akka-outreach/agentic-haiku</docker.image>
+    <docker.image>lightbend-eng/akka-outreach/agentic-haiku</docker.image>
   </properties>
 
   <dependencyManagement>

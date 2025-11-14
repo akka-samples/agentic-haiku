@@ -1,8 +1,0 @@
-exporter:
-  kalixConsole: {}
-logs: {}
-metrics: {}
-traces:
-  sampling:
-    probabilistic:
-      percentage: "100"

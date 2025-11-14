@@ -1,0 +1,25 @@
+name: agentic-haiku-abtb
+service:
+  volumeMounts:
+  - mountPath: /google-application-credentials-path
+    secret:
+      secretName: google-application-credentials
+  telemetry:
+    tracing:
+      enabled: true
+  env:
+  - name: GOOGLE_AI_GEMINI_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: google-gemini
+        key: api-key
+  - name: GOOGLE_APPLICATION_CREDENTIALS
+    value: /google-application-credentials-path/credentials.json
+  - name: HAIKU_APP_URL
+    value: tiny-shadow-7214.gcp-us-east1.akka.services
+  image: kcr.us-east-1.kalix.io/lightbend-eng/akka-outreach/agentic-haiku:1.0.2
+  resources:
+    runtime:
+      mode: embedded
+    autoscaling:
+      maxInstances: 1
