@@ -9,13 +9,13 @@
   
   <groupId>akka.agentic.haiku</groupId>
   <artifactId>agentic-haiku</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
+  <version>1.0.2</version>
   <packaging>jar</packaging>
 
   <name>agentic-haiku</name>
 
   <properties>
-    <docker.image>kcr.us-east-1.kalix.io/lightbend-eng/devoxx-be/agentic-haiku</docker.image>
+    <docker.image>akka-outreach/agentic-haiku</docker.image>
   </properties>
 
   <dependencyManagement>
