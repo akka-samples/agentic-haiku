@@ -46,12 +46,12 @@ public class Bootstrap implements ServiceSetup {
   }
 
   private ImageGenerator createImageGenerator(BlobStorage blobStorage) {
-    var googleApplicationCredentials = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
-    if (googleApplicationCredentials == null || googleApplicationCredentials.isEmpty()) {
+    var googleApplicationCredentials = System.getenv("GOOGLE_AI_GEMINI_API_KEY");
+    if (googleGeminiCredentials == null || googleGeminiCredentials.isEmpty()) {
       log.info("Using FixedImageGenerator for images");
       return new FixedImageGenerator();
     } else {
-      log.info("Using GCPFixedImageGenerator for images");
+      log.info("Using GeminiImageGenerator for images");
       return new GeminiImageGenerator(blobStorage);
     }
   }
