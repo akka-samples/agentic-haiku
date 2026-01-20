@@ -18,7 +18,9 @@ public class LocalStorage implements BlobStorage {
 
       Files.write(tempFile, data);
 
-      return "file://"+tempFile.toAbsolutePath();
+      //This relies on the param MAVEN_OPTS="-Djava.io.tmpdir=target/classes/static-resources"
+      // being supplied to override the temp file to go to the server static file location
+      return "/static/"+tempFile.getFileName().toString();
     } catch (IOException e) {
       log.error("Error while trying to store the PNG file", e);
       throw new RuntimeException(e);

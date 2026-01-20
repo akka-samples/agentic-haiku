@@ -60,8 +60,10 @@ docker compose up
 Start the service with tracing enabled:
 
 ```shell
-TRACING_ENABLED=true COLLECTOR_ENDPOINT="http://localhost:4317" mvn compile exec:java
+MAVEN_OPTS="-Djava.io.tmpdir=target/classes/static-resources" TRACING_ENABLED=true COLLECTOR_ENDPOINT="http://localhost:4317" mvn compile exec:java
 ```
+
+**Note**: The MAVEN_OPTS is only required if you are using a local file system (i.e. no `GOOGLE_APPLICATION_CREDENTIALS` provided)
 
 ## Using the Application
 
