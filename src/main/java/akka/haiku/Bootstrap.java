@@ -46,7 +46,7 @@ public class Bootstrap implements ServiceSetup {
   }
 
   private ImageGenerator createImageGenerator(BlobStorage blobStorage) {
-    var googleApplicationCredentials = System.getenv("GOOGLE_AI_GEMINI_API_KEY");
+    var googleGeminiCredentials = System.getenv("GOOGLE_AI_GEMINI_API_KEY");
     if (googleGeminiCredentials == null || googleGeminiCredentials.isEmpty()) {
       log.info("Using FixedImageGenerator for images");
       return new FixedImageGenerator();
