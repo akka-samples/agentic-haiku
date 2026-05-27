@@ -38,9 +38,9 @@ public class HaikuGenerationWorkflow extends Workflow<HaikuGeneration> {
   public WorkflowSettings settings() {
     return WorkflowSettings.builder()
       .defaultStepTimeout(ofSeconds(15))
-      .defaultStepRecovery(maxRetries(5).failoverTo(HaikuGenerationWorkflow::timeoutStep))
+      .defaultStepRecovery(RecoverStrategy.maxRetries(5).failoverTo(HaikuGenerationWorkflow::timeoutStep))
       .stepTimeout(HaikuGenerationWorkflow::generateImage, ofSeconds(30))
-      .stepRecovery(HaikuGenerationWorkflow::generateImage, maxRetries(3).failoverTo(HaikuGenerationWorkflow::timeoutStep))
+      .stepRecovery(HaikuGenerationWorkflow::generateImage, RecoverStrategy.maxRetries(3).failoverTo(HaikuGenerationWorkflow::timeoutStep))
       .build();
   }
 
